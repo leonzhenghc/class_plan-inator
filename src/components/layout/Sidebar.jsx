@@ -1,0 +1,88 @@
+import { NavLink } from 'react-router-dom'
+import {
+  CalendarDays,
+  ClipboardList,
+  Copy,
+  LayoutGrid,
+  PlayCircle,
+  Settings as SettingsIcon,
+  Timer,
+  User,
+} from 'lucide-react'
+import { cn } from '../ui/cn.js'
+
+const NAV_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
+  { to: '/classes', label: 'Class Planner', icon: CalendarDays },
+  { to: '/planner', label: 'Daily Planner', icon: ClipboardList },
+  { to: '/pomodoro', label: 'Pomodoro', icon: Timer },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
+]
+
+export default function Sidebar() {
+  return (
+    <aside className="fixed inset-y-0 left-0 z-20 flex w-60 flex-col border-r border-gray-200 bg-white">
+      <div className="flex items-center gap-3 px-6 pt-7 pb-8">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-sm">
+          <Copy className="h-5 w-5 text-white" strokeWidth={2.25} />
+        </div>
+        <div className="leading-tight">
+          <p className="text-[22px] font-extrabold tracking-tight text-brand-600">Clarity</p>
+          <p className="text-xs font-medium text-gray-500">Student Workspace</p>
+        </div>
+      </div>
+
+      <nav className="flex flex-col gap-1 px-3">
+        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              cn(
+                'relative flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold transition-colors',
+                isActive
+                  ? 'bg-brand-50 text-brand-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive ? (
+                  <span className="absolute top-2 bottom-2 -left-3 w-1 rounded-r-full bg-brand-600" />
+                ) : null}
+                <Icon
+                  className={cn('h-[19px] w-[19px]', isActive ? 'text-brand-600' : 'text-gray-500')}
+                  strokeWidth={2}
+                />
+                {label}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="mt-auto px-5 pb-7">
+        <button
+          type="button"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-600 px-2 py-3.5 text-[14px] font-bold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-brand-700"
+        >
+          <PlayCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={2.25} />
+          Start Study Session
+        </button>
+
+        <div className="my-5 border-t border-gray-200" />
+
+        <NavLink
+          to="/settings"
+          className="flex items-center gap-3 rounded-xl px-1 py-1 text-[15px] font-semibold text-gray-700 transition-colors hover:text-brand-600"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50">
+            <User className="h-[18px] w-[18px] text-brand-600" strokeWidth={2} />
+          </span>
+          Profile Settings
+        </NavLink>
+      </div>
+    </aside>
+  )
+}
