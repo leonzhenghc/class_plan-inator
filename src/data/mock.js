@@ -239,3 +239,29 @@ export const connectedAccounts = [
     iconClass: 'bg-gray-100 text-gray-500',
   },
 ]
+
+/* ------------------------------- Session setup -------------------------------- */
+
+/**
+ * What the study-session popup offers to work on: everything already synced from the
+ * calendar (upcoming assignments) plus whatever is still open on today's planner.
+ * Derived from the lists above so there is one source of truth per item.
+ */
+export const sessionTaskOptions = [
+  ...upcomingAssignments.map((assignment) => ({
+    id: assignment.id,
+    title: assignment.title,
+    meta: assignment.meta,
+    source: 'Assignment',
+    urgent: assignment.status.tone === 'due',
+  })),
+  ...initialTasks
+    .filter((task) => !task.done)
+    .map((task) => ({
+      id: task.id,
+      title: task.label,
+      meta: task.due ?? task.tag?.label ?? 'Today',
+      source: 'Task',
+      urgent: Boolean(task.due),
+    })),
+]
