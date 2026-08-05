@@ -16,10 +16,12 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/classes" element={<ClassPlanner />} />
           <Route path="/planner" element={<DailyPlanner />} />
-          <Route path="/pomodoro" element={<Pomodoro />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
+
+        {/* Immersive: owns the whole viewport, so it sits outside the standard chrome. */}
+        <Route path="/pomodoro" element={<Pomodoro />} />
       </Routes>
     </StudySessionProvider>
   )

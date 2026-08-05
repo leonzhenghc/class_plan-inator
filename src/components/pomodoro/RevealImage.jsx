@@ -1,47 +1,40 @@
 import { ImagePlus } from 'lucide-react'
 import { cn } from '../ui/cn.js'
 
-/** Heaviest blur, in px, applied at the very start of a session. */
-const MAX_BLUR = 26
-/** How far the image is scaled up, so blurred edges bleed past the circular crop. */
+/** Heaviest blur, in px, applied at the very start of a block. */
+const MAX_BLUR = 32
+/** Scale-up so the blur's soft edge bleeds past the frame instead of showing a halo. */
 const OVERSCAN = 'scale-110'
 
 /**
- * Easing for the two filters. Both take `revealed` (0 = session start, 1 = complete).
+ * Easing for the two filters. Both take `revealed` (0 = block start, 1 = complete).
  *
- * Exponents below 1 hold the effect high through the middle of the session, so the image
+ * Exponents below 1 hold the effect high through the middle of the block, so the image
  * resolves late rather than becoming legible in the first few minutes. Grayscale lifts a
  * little sooner than blur, letting colour hint at the subject before the detail lands.
  */
 const blurFor = (revealed) => MAX_BLUR * (1 - revealed) ** 0.75
 const grayscaleFor = (revealed) => 100 * (1 - revealed) ** 1.2
 
+/** Fills whatever it is given — the stage sizes it, so it works full-bleed. */
 export default function RevealImage({ src, alt, revealed = 0, className }) {
   if (!src) {
     return (
-      <div
-        className={cn(
-          'flex h-[340px] w-[340px] flex-col items-center justify-center gap-3 rounded-full border-2 border-dashed border-gray-300 bg-white px-12 text-center',
-          className,
-        )}
-      >
-        <ImagePlus className="h-8 w-8 text-gray-400" strokeWidth={1.75} />
-        <p className="text-[15px] font-semibold text-gray-600">No reveal images yet</p>
-        <p className="text-[13px] leading-relaxed text-gray-400">
-          Drop images into <span className="font-medium text-gray-500">src/assets/reveal/</span> to
-          see them resolve as the timer runs.
-        </p>
+      <div className={cn('flex items-center justify-center bg-gray-900', className)}>
+        <div className="flex max-w-sm flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-white/20 px-10 py-10 text-center">
+          <ImagePlus className="h-8 w-8 text-white/40" strokeWidth={1.75} />
+          <p className="text-[15px] font-semibold text-white/80">No reveal images yet</p>
+          <p className="text-[13px] leading-relaxed text-white/40">
+            Drop images into <span className="font-medium text-white/60">src/assets/reveal/</span>{' '}
+            to see them resolve as the timer runs.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div
-      className={cn(
-        'relative h-[340px] w-[340px] overflow-hidden rounded-full bg-gray-100 shadow-sm ring-1 ring-gray-200',
-        className,
-      )}
-    >
+    <div className={cn('overflow-hidden bg-gray-900', className)}>
       <img
         src={src}
         alt={alt}
@@ -55,8 +48,6 @@ export default function RevealImage({ src, alt, revealed = 0, className }) {
           '--reveal-grayscale': `${grayscaleFor(revealed).toFixed(2)}%`,
         }}
       />
-      {/* Keeps the crop edge crisp against light images. */}
-      <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-black/5 ring-inset" />
     </div>
   )
 }

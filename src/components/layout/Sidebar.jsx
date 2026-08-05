@@ -20,7 +20,11 @@ const NAV_ITEMS = [
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
-export default function Sidebar() {
+/**
+ * `className` lets the immersive Pomodoro stage reposition this as a slide-in panel;
+ * `onNavigate` lets it close itself once a destination is picked.
+ */
+export default function Sidebar({ className, onNavigate }) {
   const navigate = useNavigate()
   const { openSetup } = useStudySession()
 
@@ -28,10 +32,16 @@ export default function Sidebar() {
   const startStudySession = () => {
     navigate('/pomodoro')
     openSetup()
+    onNavigate?.()
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 flex w-60 flex-col border-r border-gray-200 bg-white">
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 z-20 flex w-60 flex-col border-r border-gray-200 bg-white',
+        className,
+      )}
+    >
       <div className="flex items-center gap-3 px-6 pt-7 pb-8">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-sm">
           <Copy className="h-5 w-5 text-white" strokeWidth={2.25} />
@@ -47,6 +57,7 @@ export default function Sidebar() {
           <NavLink
             key={to}
             to={to}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 'relative flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold transition-colors',
@@ -86,6 +97,7 @@ export default function Sidebar() {
 
         <NavLink
           to="/settings"
+          onClick={onNavigate}
           className="flex items-center gap-3 rounded-xl px-1 py-1 text-[15px] font-semibold text-gray-700 transition-colors hover:text-brand-600"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50">

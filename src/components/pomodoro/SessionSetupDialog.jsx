@@ -8,7 +8,13 @@ import { revealImages } from '../../data/revealImages.js'
 import { sessionTaskOptions } from '../../data/mock.js'
 import { DEFAULT_CONFIG } from '../../context/StudySessionContext.jsx'
 
-export default function SessionSetupDialog({ open, initialConfig, canDismiss, onDismiss, onStart }) {
+export default function SessionSetupDialog({
+  open,
+  initialConfig,
+  hasExistingSession,
+  onDismiss,
+  onStart,
+}) {
   const [focusMinutes, setFocusMinutes] = useState(DEFAULT_CONFIG.focusMinutes)
   const [breakMinutes, setBreakMinutes] = useState(DEFAULT_CONFIG.breakMinutes)
   const [rounds, setRounds] = useState(DEFAULT_CONFIG.rounds)
@@ -29,13 +35,13 @@ export default function SessionSetupDialog({ open, initialConfig, canDismiss, on
   }, [open, initialConfig])
 
   useEffect(() => {
-    if (!open || !canDismiss) return undefined
+    if (!open) return undefined
     const onKeyDown = (event) => {
       if (event.key === 'Escape') onDismiss()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open, canDismiss, onDismiss])
+  }, [open, onDismiss])
 
   if (!open) return null
 
@@ -50,16 +56,13 @@ export default function SessionSetupDialog({ open, initialConfig, canDismiss, on
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
       <button
         type="button"
         aria-label="Close session setup"
         tabIndex={-1}
-        onClick={() => canDismiss && onDismiss()}
-        className={cn(
-          'absolute inset-0 bg-gray-900/40 backdrop-blur-sm',
-          canDismiss ? 'cursor-pointer' : 'cursor-default',
-        )}
+        onClick={onDismiss}
+        className="absolute inset-0 cursor-pointer bg-gray-900/40 backdrop-blur-sm"
       />
 
       <form
@@ -71,25 +74,22 @@ export default function SessionSetupDialog({ open, initialConfig, canDismiss, on
         tabIndex={-1}
         className="relative flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none"
       >
-        <div className="flex items-start justify-between gap-4 px-7 pt-6 pb-5">
-          <div>
-            <h2 id="session-setup-title" className="text-2xl font-extrabold tracking-tight">
-              Set up your session
-            </h2>
-            <p className="mt-1 text-[15px] text-gray-500">
-              About {totalMinutes} min in total, including breaks.
-            </p>
-          </div>
-          {canDismiss ? (
-            <button
-              type="button"
-              onClick={onDismiss}
-              aria-label="Close"
-              className="-mt-1 cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" strokeWidth={2.25} />
-            </button>
-          ) : null}
+        <div className="px-7 pt-5 pb-5">
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Close"
+            className="-ml-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+          >
+            <X className="h-[18px] w-[18px]" strokeWidth={2.25} />
+          </button>
+
+          <h2 id="session-setup-title" className="mt-3 text-2xl font-extrabold tracking-tight">
+            Set up your session
+          </h2>
+          <p className="mt-1 text-[15px] text-gray-500">
+            About {totalMinutes} min in total, including breaks.
+          </p>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-7 pb-2">
@@ -211,7 +211,7 @@ export default function SessionSetupDialog({ open, initialConfig, canDismiss, on
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-7 py-5">
-          {canDismiss ? (
+          {hasExistingSession ? (
             <Button type="button" variant="outline" onClick={onDismiss}>
               Cancel
             </Button>
