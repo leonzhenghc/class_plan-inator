@@ -1,10 +1,3 @@
-export const user = {
-  fullName: 'Alex Johnson',
-  displayName: 'Alex',
-  email: 'alex.johnson@university.edu',
-  membership: 'Premium Member',
-}
-
 /* ---------------------------------- Dashboard --------------------------------- */
 
 export const weekDays = [
@@ -209,35 +202,6 @@ export const activityLog = [
   { id: 'l1', title: 'Calc Homework', time: 'Completed at 10:45 AM', duration: '25m' },
   { id: 'l2', title: 'Short Break', time: 'Completed at 10:15 AM', duration: '5m' },
   { id: 'l3', title: 'History Reading', time: 'Completed at 09:50 AM', duration: '25m' },
-]
-
-/* ---------------------------------- Settings ---------------------------------- */
-
-export const connectedAccounts = [
-  {
-    id: 'canvas',
-    name: 'Canvas LMS',
-    status: 'Connected',
-    connected: true,
-    action: 'Disconnect',
-    iconClass: 'bg-red-50 text-red-500',
-  },
-  {
-    id: 'gcal',
-    name: 'Google Calendar',
-    status: 'Last synced 2h ago',
-    connected: true,
-    action: 'Re-sync',
-    iconClass: 'bg-blue-50 text-blue-500',
-  },
-  {
-    id: 'notion',
-    name: 'Notion API',
-    status: 'Integrate your notes',
-    connected: false,
-    action: 'Connect',
-    iconClass: 'bg-gray-100 text-gray-500',
-  },
 ]
 
 /* ------------------------------- Session setup -------------------------------- */

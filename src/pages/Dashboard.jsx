@@ -7,10 +7,8 @@ import {
   Microscope,
   MoreHorizontal,
   Play,
-  RefreshCw,
   RotateCcw,
   Sigma,
-  Sparkles,
   Timer,
   TrendingUp,
 } from 'lucide-react'
@@ -20,17 +18,15 @@ import Button from '../components/ui/Button.jsx'
 import Checkbox from '../components/ui/Checkbox.jsx'
 import StatusTag from '../components/ui/StatusTag.jsx'
 import { cn } from '../components/ui/cn.js'
-import {
-  learningVelocity,
-  todaysFocus,
-  upcomingAssignments,
-  user,
-  weekDays,
-} from '../data/mock.js'
+import { learningVelocity, todaysFocus, upcomingAssignments, weekDays } from '../data/mock.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const ASSIGNMENT_ICONS = { feather: Feather, microscope: Microscope, sigma: Sigma }
 
 export default function Dashboard() {
+  const { profile } = useAuth()
+  const greetingName = profile?.display_name || profile?.full_name?.split(' ')[0] || 'there'
+
   const [focusItems, setFocusItems] = useState(todaysFocus)
 
   const toggleFocus = (id) =>
@@ -47,7 +43,7 @@ export default function Dashboard() {
         <div className="min-w-0 flex-1">
           <div className="mb-8">
             <h1 className="text-5xl font-extrabold tracking-tight text-gray-900">
-              Welcome back, {user.displayName}
+              Welcome back, {greetingName}
             </h1>
             <p className="mt-3 text-lg text-gray-500">
               You have <span className="font-bold text-brand-600">3 assignments</span> due today.
@@ -158,25 +154,6 @@ export default function Dashboard() {
               <p className="text-[15px] font-bold text-gray-900">8 Days 🔥</p>
             </div>
           </Card>
-
-          <div className="relative overflow-hidden rounded-2xl bg-brand-600 px-6 py-6 text-white">
-            <Sparkles
-              className="absolute -right-4 -bottom-6 h-32 w-32 text-white/10"
-              strokeWidth={1.5}
-            />
-            <div className="relative">
-              <div className="flex items-center gap-2">
-                <RefreshCw className="h-5 w-5" strokeWidth={2.25} />
-                <h3 className="text-[17px] font-bold">Canvas Sync Successful</h3>
-              </div>
-              <p className="mt-3 text-[15px] leading-relaxed text-brand-100">
-                4 new syllabus dates and 2 grades were imported automatically.
-              </p>
-              <Button variant="white" size="sm" className="mt-5">
-                Review Changes
-              </Button>
-            </div>
-          </div>
 
           <Card className="px-6 py-5">
             <CardTitle>Today&apos;s Focus</CardTitle>
