@@ -14,6 +14,12 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [preferences, setPreferences] = useState(null)
   const [loading, setLoading] = useState(isSupabaseConfigured)
+  /**
+   * Distinguishes "profile not fetched yet" from "fetched, and there is no row".
+   * Without this the guard can't tell a mid-flight sign-up from a finished one,
+   * and briefly renders the app to someone who still owes us onboarding.
+   */
+  const [profileLoaded, setProfileLoaded] = useState(false)
 
   const user = session?.user ?? null
 
@@ -21,6 +27,7 @@ export function AuthProvider({ children }) {
     if (!userId) {
       setProfile(null)
       setPreferences(null)
+      setProfileLoaded(false)
       return
     }
 
@@ -31,6 +38,7 @@ export function AuthProvider({ children }) {
 
     setProfile(profileResult.data ?? null)
     setPreferences(preferencesResult.data ?? null)
+    setProfileLoaded(true)
   }, [])
 
   useEffect(() => {
@@ -87,20 +95,25 @@ export function AuthProvider({ children }) {
     if (!error) {
       setProfile(null)
       setPreferences(null)
+      setProfileLoaded(false)
     }
     return { error }
   }, [])
 
+  // Upsert rather than update: the sign-up trigger normally creates these rows,
+  // but upserting means a missing row heals itself instead of failing the save.
   const updateProfile = useCallback(
     async (patch) => {
       if (!user) return { error: new Error('Not signed in') }
       const { data, error } = await supabase
         .from('profiles')
-        .update(patch)
-        .eq('id', user.id)
+        .upsert({ id: user.id, ...patch }, { onConflict: 'id' })
         .select()
         .single()
-      if (!error) setProfile(data)
+      if (!error) {
+        setProfile(data)
+        setProfileLoaded(true)
+      }
       return { data, error }
     },
     [user],
@@ -111,8 +124,7 @@ export function AuthProvider({ children }) {
       if (!user) return { error: new Error('Not signed in') }
       const { data, error } = await supabase
         .from('preferences')
-        .update(patch)
-        .eq('user_id', user.id)
+        .upsert({ user_id: user.id, ...patch }, { onConflict: 'user_id' })
         .select()
         .single()
       if (!error) setPreferences(data)
@@ -131,8 +143,14 @@ export function AuthProvider({ children }) {
       user,
       profile,
       preferences,
-      /** Onboarding is complete once the profile carries a timestamp. */
-      needsOnboarding: Boolean(user) && Boolean(profile) && !profile.onboarded_at,
+      profileLoaded,
+      /**
+       * Onboarding is complete once the profile carries a timestamp. A signed-in
+       * user whose profile row is missing entirely also counts as needing it, so
+       * accounts created before the trigger existed still get set up rather than
+       * landing in a half-configured app.
+       */
+      needsOnboarding: Boolean(user) && profileLoaded && !profile?.onboarded_at,
       signUp,
       signIn,
       signInWithGoogle,
@@ -147,6 +165,7 @@ export function AuthProvider({ children }) {
       user,
       profile,
       preferences,
+      profileLoaded,
       signUp,
       signIn,
       signInWithGoogle,

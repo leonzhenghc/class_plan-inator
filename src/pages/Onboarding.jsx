@@ -19,7 +19,8 @@ const STEPS = [
 const emptyClass = () => ({ key: crypto.randomUUID(), name: '', professor: '', category: 'STEM' })
 
 export default function Onboarding() {
-  const { user, profile, loading, needsOnboarding, updateProfile, updatePreferences } = useAuth()
+  const { user, profile, loading, profileLoaded, needsOnboarding, updateProfile, updatePreferences } =
+    useAuth()
   const navigate = useNavigate()
 
   const [step, setStep] = useState(0)
@@ -54,7 +55,7 @@ export default function Onboarding() {
 
   if (loading) return <FullPageSpinner />
   if (!user) return <Navigate to="/signin" replace />
-  if (profile && !needsOnboarding) return <Navigate to="/dashboard" replace />
+  if (profileLoaded && !needsOnboarding) return <Navigate to="/dashboard" replace />
 
   const canContinue =
     step === 0 ? details.fullName.trim().length > 0 && details.school.trim().length > 0 : true
