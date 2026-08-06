@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { StudySessionProvider } from './context/StudySessionContext.jsx'
+import { WorkspaceProvider } from './context/WorkspaceContext.jsx'
 import RequireAuth from './components/auth/RequireAuth.jsx'
 import AppLayout from './components/layout/AppLayout.jsx'
 import { isSupabaseConfigured } from './lib/supabase.js'
@@ -27,7 +28,9 @@ export default function App() {
           <Route
             element={
               <RequireAuth>
-                <AppLayout />
+                <WorkspaceProvider>
+                  <AppLayout />
+                </WorkspaceProvider>
               </RequireAuth>
             }
           >
