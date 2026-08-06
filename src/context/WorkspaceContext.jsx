@@ -17,6 +17,7 @@ export function WorkspaceProvider({ children }) {
   const [assignments, setAssignments] = useState([])
   const [tasks, setTasks] = useState([])
   const [events, setEvents] = useState([])
+  const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -26,6 +27,7 @@ export function WorkspaceProvider({ children }) {
       setAssignments([])
       setTasks([])
       setEvents([])
+      setSessions([])
       setLoading(false)
       return
     }
@@ -33,7 +35,8 @@ export function WorkspaceProvider({ children }) {
     setLoading(true)
     // A student's whole workspace is small, so fetch it once and filter by date
     // in memory. That keeps day-to-day navigation instant with no extra round trips.
-    const [classResult, assignmentResult, taskResult, eventResult] = await Promise.all([
+    const [classResult, assignmentResult, taskResult, eventResult, sessionResult] =
+      await Promise.all([
       supabase.from('classes').select('*').order('created_at', { ascending: true }),
       supabase
         .from('assignments')
@@ -41,6 +44,11 @@ export function WorkspaceProvider({ children }) {
         .order('due_at', { ascending: true, nullsFirst: false }),
       supabase.from('tasks').select('*').order('created_at', { ascending: true }),
       supabase.from('events').select('*').order('starts_at', { ascending: true }),
+      supabase
+        .from('pomodoro_sessions')
+        .select('*')
+        .order('completed_at', { ascending: false })
+        .limit(500),
     ])
 
     setError(
@@ -50,6 +58,7 @@ export function WorkspaceProvider({ children }) {
     setAssignments(assignmentResult.data ?? [])
     setTasks(taskResult.data ?? [])
     setEvents(eventResult.data ?? [])
+    setSessions(sessionResult.data ?? [])
     setLoading(false)
   }, [user])
 
@@ -193,6 +202,23 @@ export function WorkspaceProvider({ children }) {
     return { error: deleteError }
   }, [])
 
+  /* --------------------------- pomodoro sessions --------------------------- */
+
+  /** Records a finished focus or break block. Newest first, matching the query. */
+  const logSession = useCallback(
+    async (values) => {
+      if (!user) return { error: new Error('Not signed in') }
+      const { data, error: insertError } = await supabase
+        .from('pomodoro_sessions')
+        .insert({ ...values, user_id: user.id })
+        .select()
+        .single()
+      if (!insertError) setSessions((current) => [data, ...current])
+      return { data, error: insertError }
+    },
+    [user],
+  )
+
   /* ------------------------------- derived -------------------------------- */
 
   const classesById = useMemo(
@@ -241,6 +267,7 @@ export function WorkspaceProvider({ children }) {
       assignments,
       tasks,
       events,
+      sessions,
       classesById,
       statsByClass,
       reload: load,
@@ -256,6 +283,7 @@ export function WorkspaceProvider({ children }) {
       createEvent,
       updateEvent,
       deleteEvent,
+      logSession,
     }),
     [
       loading,
@@ -264,6 +292,7 @@ export function WorkspaceProvider({ children }) {
       assignments,
       tasks,
       events,
+      sessions,
       classesById,
       statsByClass,
       load,
@@ -279,6 +308,7 @@ export function WorkspaceProvider({ children }) {
       createEvent,
       updateEvent,
       deleteEvent,
+      logSession,
     ],
   )
 

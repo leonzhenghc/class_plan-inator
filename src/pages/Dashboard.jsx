@@ -17,9 +17,10 @@ import Button from '../components/ui/Button.jsx'
 import Checkbox from '../components/ui/Checkbox.jsx'
 import StatusTag from '../components/ui/StatusTag.jsx'
 import { cn } from '../components/ui/cn.js'
-import { learningVelocity } from '../data/mock.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useWorkspace } from '../context/WorkspaceContext.jsx'
+import { useStudySession } from '../context/StudySessionContext.jsx'
+import { formatMinutes, useStudyStats } from '../hooks/useStudyStats.js'
 import AssignmentDialog from '../components/classes/AssignmentDialog.jsx'
 import { daysFromToday, formatDue, startOfToday, toDateKey } from '../lib/dates.js'
 
@@ -32,11 +33,19 @@ const STATUS_TAGS = {
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export default function Dashboard() {
-  const { profile } = useAuth()
+  const { profile, preferences } = useAuth()
   const greetingName = profile?.display_name || profile?.full_name?.split(' ')[0] || 'there'
 
   const { assignments, classesById, updateAssignment, tasks, createTask, updateTask } =
     useWorkspace()
+  const { velocity, peak, focusChange, streak, thisWeekMinutes, hasHistory } = useStudyStats()
+  const { config, secondsLeft, running } = useStudySession()
+
+  // The widget mirrors a live session, or previews the saved focus length when idle.
+  const defaultFocus = preferences?.focus_minutes ?? 25
+  const widgetSecondsLeft = config ? secondsLeft : defaultFocus * 60
+  const widgetMinutes = String(Math.floor(widgetSecondsLeft / 60)).padStart(2, '0')
+  const widgetSeconds = String(widgetSecondsLeft % 60).padStart(2, '0')
   const [focusDraft, setFocusDraft] = useState('')
   const [addingFocus, setAddingFocus] = useState(false)
   const [assignmentDialog, setAssignmentDialog] = useState({ open: false, editing: null })
@@ -287,11 +296,17 @@ export default function Dashboard() {
             </span>
             <div className="flex-1 border-r border-gray-200 pr-4">
               <p className="text-[13px] text-gray-500">Focus Score</p>
-              <p className="text-[15px] font-bold text-gray-900">+12% this week</p>
+              <p className="text-[15px] font-bold text-gray-900">
+                {focusChange === null
+                  ? formatMinutes(thisWeekMinutes) + ' this week'
+                  : `${focusChange >= 0 ? '+' : ''}${focusChange}% this week`}
+              </p>
             </div>
             <div className="pl-1">
               <p className="text-[13px] text-gray-500">Current Streak</p>
-              <p className="text-[15px] font-bold text-gray-900">8 Days 🔥</p>
+              <p className="text-[15px] font-bold text-gray-900">
+                {streak} Day{streak === 1 ? '' : 's'} {streak > 0 ? '🔥' : ''}
+              </p>
             </div>
           </Card>
 
@@ -357,12 +372,20 @@ export default function Dashboard() {
               Pomodoro
             </CardTitle>
             <p className="mt-6 text-center text-6xl font-extrabold tracking-tight tabular-nums">
-              25<span className="mx-0.5">:</span>00
+              {widgetMinutes}
+              <span className="mx-0.5">:</span>
+              {widgetSeconds}
             </p>
-            <p className="mt-2 text-center text-[15px] text-gray-500">Deep Work Session</p>
+            <p className="mt-2 text-center text-[15px] text-gray-500">
+              {config
+                ? running
+                  ? 'Session running'
+                  : 'Session paused'
+                : `${defaultFocus} minute focus block`}
+            </p>
             <div className="mt-5 flex items-center gap-3">
               <Button as={Link} to="/pomodoro" icon={Play} className="flex-1">
-                Start
+                {config ? 'Resume' : 'Start'}
               </Button>
               <button
                 type="button"
@@ -377,27 +400,47 @@ export default function Dashboard() {
           <Card className="px-6 py-5">
             <CardTitle
               action={
-                <span className="text-[13px] font-bold text-emerald-600">↑ 18%</span>
+                focusChange === null ? null : (
+                  <span
+                    className={cn(
+                      'text-[13px] font-bold',
+                      focusChange >= 0 ? 'text-emerald-600' : 'text-red-500',
+                    )}
+                  >
+                    {focusChange >= 0 ? '↑' : '↓'} {Math.abs(focusChange)}%
+                  </span>
+                )
               }
             >
               Learning Velocity
             </CardTitle>
-            <div className="mt-6 flex h-40 items-end gap-3">
-              {learningVelocity.map((bar, index) => (
-                <div key={index} className="flex flex-1 flex-col items-center gap-3">
-                  <div className="flex h-32 w-full items-end">
-                    <div
-                      className={cn(
-                        'w-full rounded-t-md',
-                        bar.active ? 'bg-brand-600' : 'bg-gray-200',
-                      )}
-                      style={{ height: `${bar.value}%` }}
-                    />
+
+            {hasHistory ? (
+              <div className="mt-6 flex h-40 items-end gap-3">
+                {velocity.map((bar, index) => (
+                  <div key={index} className="flex flex-1 flex-col items-center gap-3">
+                    <div className="flex h-32 w-full items-end">
+                      <div
+                        title={`${formatMinutes(bar.minutes)} focused`}
+                        className={cn(
+                          'w-full rounded-t-md transition-all',
+                          bar.isToday ? 'bg-brand-600' : 'bg-gray-200',
+                        )}
+                        style={{
+                          // Floor at 4% so an empty day still reads as a bar, not a gap.
+                          height: peak > 0 ? `${Math.max(4, (bar.minutes / peak) * 100)}%` : '4%',
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-400">{bar.day}</span>
                   </div>
-                  <span className="text-xs font-semibold text-gray-400">{bar.day}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-[15px] leading-relaxed text-gray-500">
+                Finish a focus block and your last seven days show up here.
+              </p>
+            )}
           </Card>
         </div>
       </main>

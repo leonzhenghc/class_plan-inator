@@ -4,7 +4,7 @@ import Card from '../ui/Card.jsx'
 import Checkbox from '../ui/Checkbox.jsx'
 import ProgressBar from '../ui/ProgressBar.jsx'
 import { cn } from '../ui/cn.js'
-import { activityLog } from '../../data/mock.js'
+import { useStudyStats, formatMinutes } from '../../hooks/useStudyStats.js'
 
 /**
  * Secondary session content, slid in over the image from the right. The image never
@@ -22,6 +22,7 @@ export default function SessionDrawer({
   onToggleTask,
   onOpenSetup,
 }) {
+  const { recent, todayMinutes } = useStudyStats()
   useEffect(() => {
     if (!open) return undefined
     const onKeyDown = (event) => {
@@ -126,29 +127,40 @@ export default function SessionDrawer({
         <Card className="px-5 py-4">
           <div className="flex items-center justify-between">
             <p className="text-[15px] font-bold text-gray-900">Activity Log</p>
-            <span className="text-[13px] text-gray-500">Today</span>
+            <span className="text-[13px] text-gray-500">{formatMinutes(todayMinutes)} today</span>
           </div>
 
-          <ul className="mt-4 space-y-4">
-            {activityLog.map((entry) => (
-              <li key={entry.id} className="flex items-start gap-3">
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-bold text-gray-900">{entry.title}</p>
-                  <p className="mt-0.5 text-[13px] text-gray-500">{entry.time}</p>
-                </div>
-                <span className="shrink-0 text-[13px] text-gray-500">{entry.duration}</span>
-              </li>
-            ))}
-          </ul>
-
-          <button
-            type="button"
-            tabIndex={open ? 0 : -1}
-            className="mt-4 w-full cursor-pointer text-center text-[15px] font-semibold text-brand-600 hover:text-brand-700"
-          >
-            View Full History
-          </button>
+          {recent.length === 0 ? (
+            <p className="mt-3 text-[15px] leading-relaxed text-gray-500">
+              Finished blocks land here. Skipped ones don&apos;t count.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-4">
+              {recent.map((entry) => (
+                <li key={entry.id} className="flex items-start gap-3">
+                  <span
+                    className={cn(
+                      'mt-1.5 h-2 w-2 shrink-0 rounded-full',
+                      entry.phase === 'focus' ? 'bg-brand-500' : 'bg-emerald-500',
+                    )}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-bold text-gray-900">{entry.label}</p>
+                    <p className="mt-0.5 text-[13px] text-gray-500">
+                      Completed at{' '}
+                      {new Date(entry.completed_at).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[13px] text-gray-500">
+                    {formatMinutes(entry.minutes)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
 
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
