@@ -15,6 +15,8 @@ export function WorkspaceProvider({ children }) {
   const { user } = useAuth()
   const [classes, setClasses] = useState([])
   const [assignments, setAssignments] = useState([])
+  const [tasks, setTasks] = useState([])
+  const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -22,19 +24,32 @@ export function WorkspaceProvider({ children }) {
     if (!user) {
       setClasses([])
       setAssignments([])
+      setTasks([])
+      setEvents([])
       setLoading(false)
       return
     }
 
     setLoading(true)
-    const [classResult, assignmentResult] = await Promise.all([
+    // A student's whole workspace is small, so fetch it once and filter by date
+    // in memory. That keeps day-to-day navigation instant with no extra round trips.
+    const [classResult, assignmentResult, taskResult, eventResult] = await Promise.all([
       supabase.from('classes').select('*').order('created_at', { ascending: true }),
-      supabase.from('assignments').select('*').order('due_at', { ascending: true, nullsFirst: false }),
+      supabase
+        .from('assignments')
+        .select('*')
+        .order('due_at', { ascending: true, nullsFirst: false }),
+      supabase.from('tasks').select('*').order('created_at', { ascending: true }),
+      supabase.from('events').select('*').order('starts_at', { ascending: true }),
     ])
 
-    setError(classResult.error ?? assignmentResult.error ?? null)
+    setError(
+      classResult.error ?? assignmentResult.error ?? taskResult.error ?? eventResult.error ?? null,
+    )
     setClasses(classResult.data ?? [])
     setAssignments(assignmentResult.data ?? [])
+    setTasks(taskResult.data ?? [])
+    setEvents(eventResult.data ?? [])
     setLoading(false)
   }, [user])
 
@@ -114,6 +129,70 @@ export function WorkspaceProvider({ children }) {
     return { error: deleteError }
   }, [])
 
+  /* -------------------------------- tasks --------------------------------- */
+
+  const createTask = useCallback(
+    async (values) => {
+      const { data, error: insertError } = await supabase
+        .from('tasks')
+        .insert({ ...values, user_id: user.id })
+        .select()
+        .single()
+      if (!insertError) setTasks((current) => [...current, data])
+      return { data, error: insertError }
+    },
+    [user],
+  )
+
+  const updateTask = useCallback(async (id, values) => {
+    const { data, error: updateError } = await supabase
+      .from('tasks')
+      .update(values)
+      .eq('id', id)
+      .select()
+      .single()
+    if (!updateError) setTasks((current) => current.map((item) => (item.id === id ? data : item)))
+    return { data, error: updateError }
+  }, [])
+
+  const deleteTask = useCallback(async (id) => {
+    const { error: deleteError } = await supabase.from('tasks').delete().eq('id', id)
+    if (!deleteError) setTasks((current) => current.filter((item) => item.id !== id))
+    return { error: deleteError }
+  }, [])
+
+  /* -------------------------------- events -------------------------------- */
+
+  const createEvent = useCallback(
+    async (values) => {
+      const { data, error: insertError } = await supabase
+        .from('events')
+        .insert({ ...values, user_id: user.id })
+        .select()
+        .single()
+      if (!insertError) setEvents((current) => [...current, data])
+      return { data, error: insertError }
+    },
+    [user],
+  )
+
+  const updateEvent = useCallback(async (id, values) => {
+    const { data, error: updateError } = await supabase
+      .from('events')
+      .update(values)
+      .eq('id', id)
+      .select()
+      .single()
+    if (!updateError) setEvents((current) => current.map((item) => (item.id === id ? data : item)))
+    return { data, error: updateError }
+  }, [])
+
+  const deleteEvent = useCallback(async (id) => {
+    const { error: deleteError } = await supabase.from('events').delete().eq('id', id)
+    if (!deleteError) setEvents((current) => current.filter((item) => item.id !== id))
+    return { error: deleteError }
+  }, [])
+
   /* ------------------------------- derived -------------------------------- */
 
   const classesById = useMemo(
@@ -160,6 +239,8 @@ export function WorkspaceProvider({ children }) {
       error,
       classes,
       assignments,
+      tasks,
+      events,
       classesById,
       statsByClass,
       reload: load,
@@ -169,12 +250,20 @@ export function WorkspaceProvider({ children }) {
       createAssignment,
       updateAssignment,
       deleteAssignment,
+      createTask,
+      updateTask,
+      deleteTask,
+      createEvent,
+      updateEvent,
+      deleteEvent,
     }),
     [
       loading,
       error,
       classes,
       assignments,
+      tasks,
+      events,
       classesById,
       statsByClass,
       load,
@@ -184,6 +273,12 @@ export function WorkspaceProvider({ children }) {
       createAssignment,
       updateAssignment,
       deleteAssignment,
+      createTask,
+      updateTask,
+      deleteTask,
+      createEvent,
+      updateEvent,
+      deleteEvent,
     ],
   )
 

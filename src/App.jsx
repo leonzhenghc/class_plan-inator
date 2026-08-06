@@ -20,39 +20,40 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <StudySessionProvider>
-        <Routes>
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/onboarding" element={<Onboarding />} />
+      {/* One workspace fetch shared by the standard pages and the immersive timer. */}
+      <WorkspaceProvider>
+        <StudySessionProvider>
+          <Routes>
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/onboarding" element={<Onboarding />} />
 
-          <Route
-            element={
-              <RequireAuth>
-                <WorkspaceProvider>
+            <Route
+              element={
+                <RequireAuth>
                   <AppLayout />
-                </WorkspaceProvider>
-              </RequireAuth>
-            }
-          >
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/classes" element={<ClassPlanner />} />
-            <Route path="/planner" element={<DailyPlanner />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Route>
+                </RequireAuth>
+              }
+            >
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/classes" element={<ClassPlanner />} />
+              <Route path="/planner" element={<DailyPlanner />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Route>
 
-          {/* Immersive: owns the whole viewport, so it sits outside the standard chrome. */}
-          <Route
-            path="/pomodoro"
-            element={
-              <RequireAuth>
-                <Pomodoro />
-              </RequireAuth>
-            }
-          />
-        </Routes>
-      </StudySessionProvider>
+            {/* Immersive: owns the whole viewport, so it sits outside the standard chrome. */}
+            <Route
+              path="/pomodoro"
+              element={
+                <RequireAuth>
+                  <Pomodoro />
+                </RequireAuth>
+              }
+            />
+          </Routes>
+        </StudySessionProvider>
+      </WorkspaceProvider>
     </AuthProvider>
   )
 }

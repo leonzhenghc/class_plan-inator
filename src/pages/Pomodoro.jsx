@@ -15,7 +15,7 @@ import RevealImage from '../components/pomodoro/RevealImage.jsx'
 import SessionDrawer from '../components/pomodoro/SessionDrawer.jsx'
 import SessionSetupDialog from '../components/pomodoro/SessionSetupDialog.jsx'
 import { cn } from '../components/ui/cn.js'
-import { sessionTaskOptions } from '../data/mock.js'
+import { useSessionTaskOptions } from '../hooks/useSessionTaskOptions.js'
 import { useStudySession } from '../context/StudySessionContext.jsx'
 
 /** Frosted control styling reused by every button floating over the image. */
@@ -45,6 +45,7 @@ export default function Pomodoro() {
     skip,
   } = useStudySession()
 
+  const sessionTaskOptions = useSessionTaskOptions()
   const [navOpen, setNavOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 

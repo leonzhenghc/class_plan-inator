@@ -17,11 +17,11 @@ import Button from '../components/ui/Button.jsx'
 import Checkbox from '../components/ui/Checkbox.jsx'
 import StatusTag from '../components/ui/StatusTag.jsx'
 import { cn } from '../components/ui/cn.js'
-import { learningVelocity, todaysFocus } from '../data/mock.js'
+import { learningVelocity } from '../data/mock.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useWorkspace } from '../context/WorkspaceContext.jsx'
 import AssignmentDialog from '../components/classes/AssignmentDialog.jsx'
-import { daysFromToday, formatDue, startOfToday } from '../lib/dates.js'
+import { daysFromToday, formatDue, startOfToday, toDateKey } from '../lib/dates.js'
 
 const STATUS_TAGS = {
   todo: { label: 'To Do', tone: 'todo' },
@@ -35,16 +35,28 @@ export default function Dashboard() {
   const { profile } = useAuth()
   const greetingName = profile?.display_name || profile?.full_name?.split(' ')[0] || 'there'
 
-  const { assignments, classesById, updateAssignment } = useWorkspace()
-  const [focusItems, setFocusItems] = useState(todaysFocus)
+  const { assignments, classesById, updateAssignment, tasks, createTask, updateTask } =
+    useWorkspace()
+  const [focusDraft, setFocusDraft] = useState('')
+  const [addingFocus, setAddingFocus] = useState(false)
   const [assignmentDialog, setAssignmentDialog] = useState({ open: false, editing: null })
   const [openMenu, setOpenMenu] = useState(null)
   const [showCompleted, setShowCompleted] = useState(false)
 
-  const toggleFocus = (id) =>
-    setFocusItems((items) =>
-      items.map((item) => (item.id === id ? { ...item, done: !item.done } : item)),
-    )
+  const todayKey = toDateKey(new Date())
+  const focusItems = useMemo(
+    () => tasks.filter((task) => task.task_date === todayKey),
+    [tasks, todayKey],
+  )
+
+  const addFocusItem = async (event) => {
+    event.preventDefault()
+    const title = focusDraft.trim()
+    if (!title) return
+    setFocusDraft('')
+    setAddingFocus(false)
+    await createTask({ title, task_date: todayKey })
+  }
 
   const outstanding = useMemo(
     () => assignments.filter((item) => item.status !== 'done'),
@@ -285,24 +297,57 @@ export default function Dashboard() {
 
           <Card className="px-6 py-5">
             <CardTitle>Today&apos;s Focus</CardTitle>
-            <ul className="mt-5 space-y-4">
-              {focusItems.map((item) => (
-                <li key={item.id} className="flex items-start gap-3">
-                  <Checkbox
-                    checked={item.done}
-                    onChange={() => toggleFocus(item.id)}
-                    label={item.label}
-                  />
-                  <span className="text-[15px] leading-6 text-gray-800">{item.label}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className="mt-5 w-full cursor-pointer rounded-xl border border-dashed border-brand-300 py-3 text-[15px] font-bold text-brand-600 transition-colors hover:bg-brand-50"
-            >
-              + Add specific goal
-            </button>
+            {focusItems.length === 0 ? (
+              <p className="mt-4 text-[15px] leading-relaxed text-gray-500">
+                Nothing set for today. Add a goal, or plan the day in the{' '}
+                <Link to="/planner" className="font-semibold text-brand-600 hover:text-brand-700">
+                  Daily Planner
+                </Link>
+                .
+              </p>
+            ) : (
+              <ul className="mt-5 space-y-4">
+                {focusItems.map((item) => (
+                  <li key={item.id} className="flex items-start gap-3">
+                    <Checkbox
+                      checked={item.done}
+                      onChange={() => updateTask(item.id, { done: !item.done })}
+                      label={item.title}
+                    />
+                    <span
+                      className={cn(
+                        'text-[15px] leading-6',
+                        item.done ? 'text-gray-400 line-through' : 'text-gray-800',
+                      )}
+                    >
+                      {item.title}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {addingFocus ? (
+              <form onSubmit={addFocusItem} className="mt-5">
+                <input
+                  value={focusDraft}
+                  onChange={(event) => setFocusDraft(event.target.value)}
+                  onBlur={() => !focusDraft && setAddingFocus(false)}
+                  placeholder="What needs doing today?"
+                  aria-label="New goal"
+                  autoFocus
+                  className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                />
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAddingFocus(true)}
+                className="mt-5 w-full cursor-pointer rounded-xl border border-dashed border-brand-300 py-3 text-[15px] font-bold text-brand-600 transition-colors hover:bg-brand-50"
+              >
+                + Add specific goal
+              </button>
+            )}
           </Card>
 
           <Card className="px-6 py-5">

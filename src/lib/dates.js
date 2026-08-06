@@ -49,6 +49,58 @@ export function dueTone(dueAt, status) {
   return 'text-gray-500'
 }
 
+/* --------------------------- timeline hour values -------------------------- */
+/* Events store times as decimal hours (9.5 = 09:30) so a block's position and  */
+/* height are simple arithmetic rather than date maths on every render.         */
+
+/** 9.5 → "09:30 AM" */
+export function formatHourValue(value) {
+  const hours = Math.floor(value)
+  const minutes = Math.round((value - hours) * 60)
+  const suffix = hours >= 12 ? 'PM' : 'AM'
+  const display = hours % 12 === 0 ? 12 : hours % 12
+  return `${String(display).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${suffix}`
+}
+
+/** "09:00 - 11:30 AM" style range, dropping the repeated meridiem. */
+export function formatHourRange(start, end) {
+  const from = formatHourValue(start)
+  const to = formatHourValue(end)
+  const [fromTime, fromSuffix] = from.split(' ')
+  const [, toSuffix] = to.split(' ')
+  return fromSuffix === toSuffix ? `${fromTime} - ${to}` : `${from} - ${to}`
+}
+
+/** 9.5 → "09:30", for `<input type="time">`. */
+export function hoursToTimeInput(value) {
+  const hours = Math.floor(value)
+  const minutes = Math.round((value - hours) * 60)
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
+/** "09:30" → 9.5 */
+export function timeInputToHours(value) {
+  if (!value) return null
+  const [hours, minutes] = value.split(':').map(Number)
+  return hours + minutes / 60
+}
+
+/** Local YYYY-MM-DD, avoiding the UTC shift `toISOString()` would introduce. */
+export function toDateKey(date) {
+  const d = new Date(date)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** "Tuesday, Oct 24" */
+export function formatDayHeading(date) {
+  return new Date(date).toLocaleDateString([], {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 /** Splits an ISO timestamp into the two values `<input type="date|time">` want. */
 export function toDateTimeInputs(iso) {
   if (!iso) return { date: '', time: '' }

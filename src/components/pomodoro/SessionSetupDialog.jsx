@@ -5,7 +5,7 @@ import Checkbox from '../ui/Checkbox.jsx'
 import Stepper from '../ui/Stepper.jsx'
 import { cn } from '../ui/cn.js'
 import { revealImages } from '../../data/revealImages.js'
-import { sessionTaskOptions } from '../../data/mock.js'
+import { useSessionTaskOptions } from '../../hooks/useSessionTaskOptions.js'
 import { DEFAULT_CONFIG } from '../../context/StudySessionContext.jsx'
 
 export default function SessionSetupDialog({
@@ -21,6 +21,7 @@ export default function SessionSetupDialog({
   const [image, setImage] = useState(DEFAULT_CONFIG.image)
   const [taskIds, setTaskIds] = useState(DEFAULT_CONFIG.taskIds)
   const dialogRef = useRef(null)
+  const sessionTaskOptions = useSessionTaskOptions()
 
   // Re-seed from the last session each time the dialog opens.
   useEffect(() => {
@@ -125,6 +126,11 @@ export default function SessionSetupDialog({
               </span>
             </div>
 
+            {sessionTaskOptions.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-gray-300 px-4 py-4 text-[13px] leading-relaxed text-gray-500">
+                Nothing outstanding right now. Assignments and today&apos;s tasks show up here.
+              </p>
+            ) : (
             <ul className="max-h-[184px] space-y-2 overflow-y-auto pr-1">
               {sessionTaskOptions.map((task) => {
                 const checked = taskIds.includes(task.id)
@@ -164,6 +170,7 @@ export default function SessionSetupDialog({
                 )
               })}
             </ul>
+            )}
           </div>
 
           {/* --------------------------------- Image -------------------------------- */}

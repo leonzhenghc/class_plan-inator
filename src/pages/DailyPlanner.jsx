@@ -1,17 +1,47 @@
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Utensils } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { CalendarPlus, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import TopBar from '../components/layout/TopBar.jsx'
 import Card from '../components/ui/Card.jsx'
+import Button from '../components/ui/Button.jsx'
 import Checkbox from '../components/ui/Checkbox.jsx'
 import StatusTag from '../components/ui/StatusTag.jsx'
 import { cn } from '../components/ui/cn.js'
-import { initialTasks, scheduleEvents } from '../data/mock.js'
+import EventDialog from '../components/planner/EventDialog.jsx'
+import { useWorkspace } from '../context/WorkspaceContext.jsx'
+import { formatDayHeading, formatHourRange, toDateKey } from '../lib/dates.js'
 
 const START_HOUR = 8
 const END_HOUR = 20
 const HOUR_HEIGHT = 80
 
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
+
+const KIND_THEMES = {
+  class: {
+    block: 'bg-violet-100 hover:bg-violet-200/70',
+    accent: 'bg-brand-600',
+    subtitle: 'text-brand-600',
+    time: 'text-gray-800',
+  },
+  study: {
+    block: 'bg-sky-100 hover:bg-sky-200/70',
+    accent: 'bg-sky-600',
+    subtitle: 'text-gray-600',
+    time: 'text-gray-800',
+  },
+  break: {
+    block: 'bg-emerald-100 hover:bg-emerald-200/70',
+    accent: 'bg-emerald-600',
+    subtitle: 'text-emerald-700',
+    time: 'text-gray-700',
+  },
+  personal: {
+    block: 'bg-gray-100 hover:bg-gray-200/70',
+    accent: 'bg-gray-400',
+    subtitle: 'text-gray-600',
+    time: 'text-gray-800',
+  },
+}
 
 function formatHour(hour) {
   const suffix = hour >= 12 ? 'PM' : 'AM'
@@ -20,22 +50,41 @@ function formatHour(hour) {
 }
 
 export default function DailyPlanner() {
-  const [tasks, setTasks] = useState(initialTasks)
+  const { loading, events, tasks, createTask, updateTask, deleteTask } = useWorkspace()
+  const [day, setDay] = useState(() => new Date())
   const [draft, setDraft] = useState('')
+  const [eventDialog, setEventDialog] = useState({ open: false, editing: null, start: null })
 
-  const remaining = tasks.filter((task) => !task.done).length
+  const dateKey = toDateKey(day)
 
-  const toggleTask = (id) =>
-    setTasks((items) =>
-      items.map((task) => (task.id === id ? { ...task, done: !task.done } : task)),
-    )
+  const dayEvents = useMemo(
+    () =>
+      events
+        .filter((item) => item.event_date === dateKey)
+        .sort((a, b) => Number(a.starts_at) - Number(b.starts_at)),
+    [events, dateKey],
+  )
 
-  const addTask = (event) => {
+  const dayTasks = useMemo(
+    () => tasks.filter((item) => item.task_date === dateKey),
+    [tasks, dateKey],
+  )
+
+  const remaining = dayTasks.filter((task) => !task.done).length
+
+  const shiftDay = (delta) =>
+    setDay((current) => {
+      const next = new Date(current)
+      next.setDate(current.getDate() + delta)
+      return next
+    })
+
+  const addTask = async (event) => {
     event.preventDefault()
-    const label = draft.trim()
-    if (!label) return
-    setTasks((items) => [...items, { id: `t${Date.now()}`, label, done: false }])
+    const title = draft.trim()
+    if (!title) return
     setDraft('')
+    await createTask({ title, task_date: dateKey })
   }
 
   return (
@@ -48,21 +97,31 @@ export default function DailyPlanner() {
           <div className="flex items-start justify-between gap-6">
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-                Tuesday, Oct 24
+                {formatDayHeading(day)}
               </h1>
               <p className="mt-2 text-[15px] text-gray-500">
-                You have 4 study blocks scheduled today.
+                {dayEvents.length === 0
+                  ? 'Nothing scheduled yet — click a time slot to add something.'
+                  : `You have ${dayEvents.length} block${dayEvents.length === 1 ? '' : 's'} scheduled today.`}
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                icon={CalendarPlus}
+                onClick={() => setEventDialog({ open: true, editing: null, start: 9 })}
+              >
+                Add block
+              </Button>
               {[
-                { icon: ChevronLeft, label: 'Previous day' },
-                { icon: ChevronRight, label: 'Next day' },
-              ].map(({ icon: Icon, label }) => (
+                { icon: ChevronLeft, label: 'Previous day', delta: -1 },
+                { icon: ChevronRight, label: 'Next day', delta: 1 },
+              ].map(({ icon: Icon, label, delta }) => (
                 <button
                   key={label}
                   type="button"
                   aria-label={label}
+                  onClick={() => shiftDay(delta)}
                   className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:bg-gray-50"
                 >
                   <Icon className="h-5 w-5" strokeWidth={2.25} />
@@ -74,59 +133,61 @@ export default function DailyPlanner() {
           <div className="mt-7 border-t border-gray-200 pt-6">
             <div className="relative pl-[104px]">
               {HOURS.map((hour) => (
-                <div
-                  key={hour}
-                  className="relative h-20 border-t border-gray-100 first:border-t-0"
-                >
+                <div key={hour} className="relative h-20 border-t border-gray-100 first:border-t-0">
                   <span className="absolute top-0 -left-[104px] w-[84px] -translate-y-1/2 text-right text-[13px] font-medium text-gray-500">
                     {formatHour(hour)}
                   </span>
+                  {/* Clicking empty track opens the dialog pre-filled with that hour. */}
+                  <button
+                    type="button"
+                    aria-label={`Add a block at ${formatHour(hour)}`}
+                    onClick={() => setEventDialog({ open: true, editing: null, start: hour })}
+                    className="absolute inset-0 w-full cursor-pointer rounded-lg transition-colors hover:bg-brand-50/60"
+                  />
                 </div>
               ))}
 
               <div className="pointer-events-none absolute inset-0 left-[104px]">
-                {scheduleEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className={cn(
-                      'pointer-events-auto absolute right-0 left-0 overflow-hidden rounded-lg px-5 py-4',
-                      event.theme.block,
-                    )}
-                    style={{
-                      top: `${(event.start - START_HOUR) * HOUR_HEIGHT}px`,
-                      height: `${(event.end - event.start) * HOUR_HEIGHT - 6}px`,
-                    }}
-                  >
-                    <span
-                      className={cn('absolute inset-y-0 left-0 w-[5px]', event.theme.accent)}
-                    />
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className={cn('text-[17px] font-bold', event.theme.title)}>
-                          {event.title}
+                {dayEvents.map((event) => {
+                  const theme = KIND_THEMES[event.kind] ?? KIND_THEMES.study
+                  const start = Number(event.starts_at)
+                  const end = Number(event.ends_at)
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={() => setEventDialog({ open: true, editing: event, start: null })}
+                      className={cn(
+                        'pointer-events-auto absolute right-0 left-0 cursor-pointer overflow-hidden rounded-lg px-5 py-4 text-left transition-colors',
+                        theme.block,
+                      )}
+                      style={{
+                        top: `${(start - START_HOUR) * HOUR_HEIGHT}px`,
+                        height: `${(end - start) * HOUR_HEIGHT - 6}px`,
+                      }}
+                    >
+                      <span className={cn('absolute inset-y-0 left-0 w-[5px]', theme.accent)} />
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[17px] font-bold text-gray-900">{event.title}</p>
+                          {event.subtitle ? (
+                            <p className={cn('mt-1 text-[15px]', theme.subtitle)}>
+                              {event.subtitle}
+                            </p>
+                          ) : null}
+                          {event.tag ? (
+                            <StatusTag tone="focus" className="mt-3">
+                              {event.tag}
+                            </StatusTag>
+                          ) : null}
+                        </div>
+                        <p className={cn('shrink-0 text-[15px] font-medium', theme.time)}>
+                          {formatHourRange(start, end)}
                         </p>
-                        {event.subtitle ? (
-                          <p className={cn('mt-1 text-[15px]', event.theme.subtitle)}>
-                            {event.subtitle}
-                          </p>
-                        ) : null}
-                        {event.tag ? (
-                          <StatusTag tone="focus" className="mt-3">
-                            {event.tag}
-                          </StatusTag>
-                        ) : null}
                       </div>
-                      {event.time ? (
-                        <p className={cn('shrink-0 text-[15px] font-medium', event.theme.time)}>
-                          {event.time}
-                        </p>
-                      ) : null}
-                      {event.icon === 'utensils' ? (
-                        <Utensils className="h-5 w-5 shrink-0 text-emerald-700" strokeWidth={2} />
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -141,38 +202,49 @@ export default function DailyPlanner() {
             </span>
           </div>
 
-          <ul className="mt-6 space-y-3">
-            {tasks.map((task) => (
-              <li
-                key={task.id}
-                className="flex items-start gap-3 rounded-xl border border-gray-200 px-4 py-3.5"
-              >
-                <Checkbox
-                  checked={task.done}
-                  onChange={() => toggleTask(task.id)}
-                  label={task.label}
-                />
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      'text-[15px] font-semibold',
-                      task.done ? 'text-gray-400 line-through' : 'text-gray-800',
-                    )}
+          {loading ? (
+            <p className="mt-6 text-[15px] text-gray-400">Loading…</p>
+          ) : dayTasks.length === 0 ? (
+            <p className="mt-6 text-[15px] leading-relaxed text-gray-500">
+              No tasks for this day yet. Add one below and it will be waiting for you.
+            </p>
+          ) : (
+            <ul className="mt-6 space-y-3">
+              {dayTasks.map((task) => (
+                <li
+                  key={task.id}
+                  className="group flex items-start gap-3 rounded-xl border border-gray-200 px-4 py-3.5"
+                >
+                  <Checkbox
+                    checked={task.done}
+                    onChange={() => updateTask(task.id, { done: !task.done })}
+                    label={task.title}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        'text-[15px] font-semibold',
+                        task.done ? 'text-gray-400 line-through' : 'text-gray-800',
+                      )}
+                    >
+                      {task.title}
+                    </p>
+                    {task.category ? (
+                      <p className="mt-0.5 text-[13px] text-gray-500">{task.category}</p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => deleteTask(task.id)}
+                    aria-label={`Delete ${task.title}`}
+                    className="cursor-pointer rounded-lg p-1.5 text-gray-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
                   >
-                    {task.label}
-                  </p>
-                  {task.due ? (
-                    <p className="mt-0.5 text-[13px] font-medium text-red-500">{task.due}</p>
-                  ) : null}
-                </div>
-                {task.tag ? (
-                  <StatusTag tone={task.tag.tone} caps={false}>
-                    {task.tag.label}
-                  </StatusTag>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+                    <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <form onSubmit={addTask} className="mt-auto pt-6">
             <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white p-1.5 pl-4">
@@ -195,6 +267,14 @@ export default function DailyPlanner() {
           </form>
         </Card>
       </main>
+
+      <EventDialog
+        open={eventDialog.open}
+        editing={eventDialog.editing}
+        dateKey={dateKey}
+        defaultStart={eventDialog.start}
+        onClose={() => setEventDialog({ open: false, editing: null, start: null })}
+      />
     </>
   )
 }
