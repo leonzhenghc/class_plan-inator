@@ -2,24 +2,30 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, ArrowRight, Check, Copy, Loader2, Plus, Trash2 } from 'lucide-react'
 import Button from '../components/ui/Button.jsx'
-import Stepper from '../components/ui/Stepper.jsx'
+import ChipGroup from '../components/ui/ChipGroup.jsx'
+import { HOBBIES, STUDY_STYLES, TRAITS } from '../data/personality.js'
 import { cn } from '../components/ui/cn.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase.js'
 
 const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', 'Other']
+
 const CATEGORIES = ['STEM', 'Humanities', 'Arts', 'Social Science', 'Other']
 
 const STEPS = [
   { id: 'profile', title: 'About you', blurb: 'So the app knows who it is working for.' },
-  { id: 'prefs', title: 'How you study', blurb: 'Your default focus session. Change it any time.' },
+  {
+    id: 'personality',
+    title: 'A bit about you',
+    blurb: 'This shapes the advice you get — and the study assistant we are building.',
+  },
   { id: 'classes', title: 'Your classes', blurb: 'Add a few now — you can add more later.' },
 ]
 
 const emptyClass = () => ({ key: crypto.randomUUID(), name: '', professor: '', category: 'STEM' })
 
 export default function Onboarding() {
-  const { user, profile, loading, profileLoaded, needsOnboarding, updateProfile, updatePreferences } =
+  const { user, profile, loading, profileLoaded, needsOnboarding, updateProfile } =
     useAuth()
   const navigate = useNavigate()
 
@@ -34,11 +40,11 @@ export default function Onboarding() {
     program: '',
     year: 'Freshman',
   })
-  const [prefs, setPrefs] = useState({
-    focusMinutes: 25,
-    breakMinutes: 5,
-    rounds: 4,
-    dailyGoalMinutes: 120,
+  const [personality, setPersonality] = useState({
+    traits: [],
+    hobbies: [],
+    studyStyles: [],
+    aboutMe: '',
   })
   const [classes, setClasses] = useState([emptyClass()])
 
@@ -66,22 +72,26 @@ export default function Onboarding() {
 
     const named = classes.filter((item) => item.name.trim().length > 0)
 
-    const [{ error: profileError }, { error: prefsError }] = await Promise.all([
-      updateProfile({
-        full_name: details.fullName.trim(),
-        display_name: (details.displayName || details.fullName.split(' ')[0]).trim(),
-        school: details.school.trim(),
-        program: details.program.trim(),
-        year: details.year,
-        onboarded_at: new Date().toISOString(),
-      }),
-      updatePreferences({
-        focus_minutes: prefs.focusMinutes,
-        break_minutes: prefs.breakMinutes,
-        rounds: prefs.rounds,
-        daily_goal_minutes: prefs.dailyGoalMinutes,
-      }),
-    ])
+    const { error: profileError } = await updateProfile({
+      full_name: details.fullName.trim(),
+      display_name: (details.displayName || details.fullName.split(' ')[0]).trim(),
+      school: details.school.trim(),
+      program: details.program.trim(),
+      year: details.year,
+      personality_traits: personality.traits,
+      hobbies: personality.hobbies,
+      study_styles: personality.studyStyles,
+      about_me: personality.aboutMe.trim(),
+      onboarded_at: new Date().toISOString(),
+    })
+
+    // Bail before touching classes: inserting them after a failed profile save
+    // would leave rows behind and duplicate them when the user retries.
+    if (profileError) {
+      setBusy(false)
+      setError(profileError.message ?? 'Could not save your details. Please try again.')
+      return
+    }
 
     let classError = null
     if (named.length > 0) {
@@ -98,7 +108,7 @@ export default function Onboarding() {
 
     setBusy(false)
 
-    const failure = profileError || prefsError || classError
+    const failure = profileError || classError
     if (failure) {
       setError(failure.message ?? 'Could not save your details. Please try again.')
       return
@@ -155,7 +165,9 @@ export default function Onboarding() {
 
           <div className="mt-6">
             {step === 0 ? <ProfileStep value={details} onChange={setDetails} /> : null}
-            {step === 1 ? <PrefsStep value={prefs} onChange={setPrefs} /> : null}
+            {step === 1 ? (
+              <PersonalityStep value={personality} onChange={setPersonality} />
+            ) : null}
             {step === 2 ? <ClassesStep value={classes} onChange={setClasses} /> : null}
           </div>
 
@@ -255,59 +267,57 @@ function ProfileStep({ value, onChange }) {
   )
 }
 
-function PrefsStep({ value, onChange }) {
-  const total =
-    value.focusMinutes * value.rounds + value.breakMinutes * Math.max(0, value.rounds - 1)
+function PersonalityStep({ value, onChange }) {
+  // ChipGroup hands us an updater, so apply it against the freshest slice.
+  const set = (field) => (update) =>
+    onChange((current) => ({ ...current, [field]: update(current[field]) }))
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-3">
-        <Stepper
-          label="Focus"
-          unit="min"
-          value={value.focusMinutes}
-          onChange={(next) =>
-            onChange((current) => ({ ...current, focusMinutes: next(current.focusMinutes) }))
-          }
-          min={5}
-          max={90}
-          step={5}
-        />
-        <Stepper
-          label="Break"
-          unit="min"
-          value={value.breakMinutes}
-          onChange={(next) =>
-            onChange((current) => ({ ...current, breakMinutes: next(current.breakMinutes) }))
-          }
-          min={1}
-          max={30}
-        />
-        <Stepper
-          label="Rounds"
-          value={value.rounds}
-          onChange={(next) => onChange((current) => ({ ...current, rounds: next(current.rounds) }))}
-          min={1}
-          max={8}
-        />
-      </div>
-
-      <p className="rounded-xl bg-brand-50 px-4 py-3 text-[15px] font-medium text-brand-700">
-        A full session runs about {total} minutes, including breaks.
-      </p>
-
-      <Stepper
-        label="Daily study goal"
-        unit="min"
-        value={value.dailyGoalMinutes}
-        onChange={(next) =>
-          onChange((current) => ({ ...current, dailyGoalMinutes: next(current.dailyGoalMinutes) }))
-        }
-        min={0}
-        max={720}
-        step={30}
-        className="max-w-[220px]"
+      <ChipGroup
+        label="How would you describe yourself?"
+        hint="Pick any that fit"
+        options={TRAITS}
+        value={value.traits}
+        onChange={set('traits')}
       />
+
+      <ChipGroup
+        label="What are you into outside class?"
+        hint="Optional"
+        options={HOBBIES}
+        value={value.hobbies}
+        onChange={set('hobbies')}
+        allowCustom
+        placeholder="Something else you enjoy"
+      />
+
+      <ChipGroup
+        label="How do you like to study?"
+        hint="Optional"
+        options={STUDY_STYLES}
+        value={value.studyStyles}
+        onChange={set('studyStyles')}
+      />
+
+      <div>
+        <label htmlFor="aboutMe" className="mb-2 block text-[15px] font-semibold text-gray-800">
+          Anything else worth knowing?
+        </label>
+        <textarea
+          id="aboutMe"
+          rows={3}
+          value={value.aboutMe}
+          onChange={(event) =>
+            onChange((current) => ({ ...current, aboutMe: event.target.value }))
+          }
+          placeholder="I lose focus after about an hour, and I always leave essays too late."
+          className="w-full resize-y rounded-xl border border-gray-200 px-4 py-3 text-[15px] leading-relaxed text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+        />
+        <p className="mt-1.5 text-[13px] text-gray-400">
+          All of this is optional, and you can change it in Settings later.
+        </p>
+      </div>
     </div>
   )
 }
