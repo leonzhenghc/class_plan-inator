@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, Loader2, MailCheck } from 'lucide-react'
 import AuthShell, { AuthField, readCallbackError } from '../components/auth/AuthShell.jsx'
@@ -9,6 +9,11 @@ import { friendlyAuthError } from '../lib/supabase.js'
 /**
  * Where the confirmation email lands. Supabase verifies the token and signs the
  * user in before redirecting here, so an active session means it worked.
+ *
+ * The token is NOT stripped from the URL here. Run before the auth client has
+ * consumed it, a manual replaceState would race GoTrue's `detectSessionInUrl`
+ * and destroy the very token that creates the session. GoTrue clears the hash
+ * itself once it has read it.
  */
 export default function ConfirmEmail() {
   const { loading, user, resendConfirmation } = useAuth()
@@ -19,12 +24,6 @@ export default function ConfirmEmail() {
   const [resent, setResent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (window.location.hash || window.location.search) {
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-  }, [])
 
   const resend = async (event) => {
     event.preventDefault()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import AuthShell, { AuthField, readCallbackError } from '../components/auth/AuthShell.jsx'
@@ -12,6 +12,11 @@ const MIN_LENGTH = 8
  * Landing page for the emailed recovery link. Supabase turns that link into a
  * short-lived session before we get here, so a signed-in user is the signal
  * that the link was good.
+ *
+ * The token is NOT stripped from the URL here. Run before the auth client has
+ * consumed it, a manual replaceState would race GoTrue's `detectSessionInUrl`
+ * and destroy the very token that creates the session. GoTrue clears the hash
+ * itself once it has read it.
  */
 export default function ResetPassword() {
   const { loading, user, updatePassword } = useAuth()
@@ -23,14 +28,6 @@ export default function ResetPassword() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [done, setDone] = useState(false)
-
-  // Nothing useful is in the address bar once the tokens are consumed, and a
-  // recovery token does not belong in browser history.
-  useEffect(() => {
-    if (window.location.hash || window.location.search) {
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-  }, [])
 
   const submit = async (event) => {
     event.preventDefault()

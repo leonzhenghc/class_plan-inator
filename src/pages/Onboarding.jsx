@@ -6,7 +6,7 @@ import ChipGroup from '../components/ui/ChipGroup.jsx'
 import { HOBBIES, STUDY_STYLES, TRAITS } from '../data/personality.js'
 import { cn } from '../components/ui/cn.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { supabase } from '../lib/supabase.js'
+import { useWorkspace } from '../context/WorkspaceContext.jsx'
 
 const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', 'Other']
 
@@ -27,6 +27,7 @@ const emptyClass = () => ({ key: crypto.randomUUID(), name: '', professor: '', c
 export default function Onboarding() {
   const { user, profile, loading, profileLoaded, needsOnboarding, updateProfile } =
     useAuth()
+  const { createClass } = useWorkspace()
   const navigate = useNavigate()
 
   const [step, setStep] = useState(0)
@@ -95,15 +96,18 @@ export default function Onboarding() {
 
     let classError = null
     if (named.length > 0) {
-      const { error: insertError } = await supabase.from('classes').insert(
-        named.map((item) => ({
-          user_id: user.id,
+      // Through the workspace context, not a raw insert: the provider lives
+      // above the router and will not remount on the navigate below, so a raw
+      // insert would leave the dashboard looking empty until a page refresh.
+      for (const item of named) {
+        const { error: insertError } = await createClass({
           name: item.name.trim(),
           professor: item.professor.trim(),
           category: item.category,
-        })),
-      )
-      classError = insertError
+        })
+        classError = insertError
+        if (insertError) break
+      }
     }
 
     setBusy(false)
