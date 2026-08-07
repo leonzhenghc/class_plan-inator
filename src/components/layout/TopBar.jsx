@@ -1,8 +1,10 @@
 import { Bell, CircleHelp, Search } from 'lucide-react'
 import Avatar from '../ui/Avatar.jsx'
-import { user } from '../../data/mock.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 export default function TopBar({ placeholder = 'Search tasks, classes, or notes...', hasAlert }) {
+  const { profile } = useAuth()
+
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/95 backdrop-blur">
       <div className="flex h-20 items-center gap-6 px-8">
@@ -36,7 +38,11 @@ export default function TopBar({ placeholder = 'Search tasks, classes, or notes.
           >
             <CircleHelp className="h-[22px] w-[22px]" strokeWidth={2} />
           </button>
-          <Avatar name={user.fullName} className="h-10 w-10" textClassName="text-sm" />
+          <Avatar
+            name={profile?.full_name || profile?.display_name || 'Student'}
+            className="h-10 w-10"
+            textClassName="text-sm"
+          />
         </div>
       </div>
     </header>

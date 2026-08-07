@@ -1,14 +1,5 @@
 import { useState } from 'react'
-import {
-  BellRing,
-  CalendarDays,
-  FileText,
-  GraduationCap,
-  Moon,
-  Pencil,
-  RefreshCw,
-  Timer,
-} from 'lucide-react'
+import { BellRing, LogOut, Moon, Pencil, Timer } from 'lucide-react'
 import TopBar from '../components/layout/TopBar.jsx'
 import Card, { CardTitle } from '../components/ui/Card.jsx'
 import Button from '../components/ui/Button.jsx'
@@ -16,16 +7,9 @@ import ToggleSwitch from '../components/ui/ToggleSwitch.jsx'
 import SegmentedControl from '../components/ui/SegmentedControl.jsx'
 import Avatar from '../components/ui/Avatar.jsx'
 import { cn } from '../components/ui/cn.js'
-import { connectedAccounts, user } from '../data/mock.js'
-
-const ACCOUNT_ICONS = { canvas: GraduationCap, gcal: CalendarDays, notion: FileText }
+import { useAuth } from '../context/AuthContext.jsx'
 
 const NOTIFICATION_ROWS = [
-  {
-    id: 'canvasSync',
-    label: 'Canvas sync alerts',
-    description: 'Notify when assignments are imported.',
-  },
   {
     id: 'dueDates',
     label: 'Due date reminders',
@@ -39,17 +23,74 @@ const NOTIFICATION_ROWS = [
 ]
 
 export default function Settings() {
+  const {
+    user,
+    profile: savedProfile,
+    preferences,
+    signOut,
+    updateProfile,
+    updatePreferences,
+  } = useAuth()
+
   const [profile, setProfile] = useState({
-    fullName: user.fullName,
-    displayName: user.displayName,
+    fullName: savedProfile?.full_name ?? '',
+    displayName: savedProfile?.display_name ?? '',
   })
-  const [pomodoro, setPomodoro] = useState({ focus: 25, break: 5 })
+  const [pomodoro, setPomodoro] = useState({
+    focus: preferences?.focus_minutes ?? 25,
+    break: preferences?.break_minutes ?? 5,
+  })
   const [notifications, setNotifications] = useState({
-    canvasSync: true,
-    dueDates: true,
-    deepWork: false,
+    dueDates: preferences?.due_date_reminders ?? true,
+    deepWork: preferences?.deep_work_mode ?? false,
   })
-  const [theme, setTheme] = useState('light')
+  const [theme, setTheme] = useState(preferences?.theme ?? 'light')
+  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState(null)
+
+  const revert = () => {
+    setProfile({
+      fullName: savedProfile?.full_name ?? '',
+      displayName: savedProfile?.display_name ?? '',
+    })
+    setPomodoro({
+      focus: preferences?.focus_minutes ?? 25,
+      break: preferences?.break_minutes ?? 5,
+    })
+    setNotifications({
+      dueDates: preferences?.due_date_reminders ?? true,
+      deepWork: preferences?.deep_work_mode ?? false,
+    })
+    setTheme(preferences?.theme ?? 'light')
+    setStatus(null)
+  }
+
+  const save = async () => {
+    setSaving(true)
+    setStatus(null)
+
+    const [{ error: profileError }, { error: prefsError }] = await Promise.all([
+      updateProfile({
+        full_name: profile.fullName.trim(),
+        display_name: profile.displayName.trim(),
+      }),
+      updatePreferences({
+        focus_minutes: Number(pomodoro.focus) || 25,
+        break_minutes: Number(pomodoro.break) || 5,
+        due_date_reminders: notifications.dueDates,
+        deep_work_mode: notifications.deepWork,
+        theme,
+      }),
+    ])
+
+    setSaving(false)
+    const failure = profileError || prefsError
+    setStatus(
+      failure
+        ? { tone: 'error', message: failure.message ?? 'Could not save.' }
+        : { tone: 'ok', message: 'Saved.' },
+    )
+  }
 
   return (
     <>
@@ -156,7 +197,7 @@ export default function Settings() {
           </Card>
 
           {/* ------------------------------ Notifications ---------------------------- */}
-          <Card className="px-7 py-6 xl:col-span-1">
+          <Card className="px-7 py-6 xl:col-span-3">
             <CardTitle icon={BellRing}>Notifications</CardTitle>
 
             <div className="mt-6 space-y-6">
@@ -178,59 +219,6 @@ export default function Settings() {
             </div>
           </Card>
 
-          {/* --------------------------- Connected accounts -------------------------- */}
-          <Card className="px-7 py-6 xl:col-span-2">
-            <CardTitle icon={RefreshCw}>Connected Accounts</CardTitle>
-
-            <div className="mt-6 space-y-4">
-              {connectedAccounts.map((account) => {
-                const Icon = ACCOUNT_ICONS[account.id]
-                return (
-                  <div
-                    key={account.id}
-                    className={cn(
-                      'flex items-center gap-4 rounded-xl px-4 py-3.5',
-                      account.connected
-                        ? 'border border-gray-200'
-                        : 'border-2 border-dashed border-gray-200',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
-                        account.iconClass,
-                      )}
-                    >
-                      <Icon className="h-5 w-5" strokeWidth={2} />
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-bold text-gray-900">{account.name}</p>
-                      <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-gray-500">
-                        {account.id === 'canvas' ? (
-                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                        ) : null}
-                        {account.status}
-                      </p>
-                    </div>
-
-                    <Button
-                      size="sm"
-                      variant={
-                        account.action === 'Disconnect'
-                          ? 'primary'
-                          : account.action === 'Re-sync'
-                            ? 'outlineBrand'
-                            : 'soft'
-                      }
-                    >
-                      {account.action}
-                    </Button>
-                  </div>
-                )
-              })}
-            </div>
-          </Card>
         </div>
 
         {/* -------------------------------- Appearance ------------------------------- */}
@@ -259,11 +247,30 @@ export default function Settings() {
         </div>
 
         <div className="mt-8 border-t border-gray-200 pt-6">
-          <div className="flex items-center justify-end gap-4">
-            <Button variant="outline" size="lg">
-              Cancel Changes
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Button variant="outline" size="lg" icon={LogOut} onClick={signOut}>
+              Sign out
             </Button>
-            <Button size="lg">Save All Changes</Button>
+
+            <div className="flex items-center gap-4">
+              {status ? (
+                <span
+                  role="status"
+                  className={cn(
+                    'text-[15px] font-semibold',
+                    status.tone === 'error' ? 'text-red-600' : 'text-emerald-600',
+                  )}
+                >
+                  {status.message}
+                </span>
+              ) : null}
+              <Button variant="outline" size="lg" onClick={revert} disabled={saving}>
+                Cancel Changes
+              </Button>
+              <Button size="lg" onClick={save} disabled={saving}>
+                {saving ? 'Saving…' : 'Save All Changes'}
+              </Button>
+            </div>
           </div>
         </div>
       </main>
