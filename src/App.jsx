@@ -7,6 +7,9 @@ import AppLayout from './components/layout/AppLayout.jsx'
 import { isSupabaseConfigured } from './lib/supabase.js'
 import SetupRequired from './pages/SetupRequired.jsx'
 import SignIn from './pages/SignIn.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
+import ConfirmEmail from './pages/ConfirmEmail.jsx'
 import Onboarding from './pages/Onboarding.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import ClassPlanner from './pages/ClassPlanner.jsx'
@@ -25,6 +28,10 @@ export default function App() {
         <StudySessionProvider>
           <Routes>
             <Route path="/signin" element={<SignIn />} />
+            {/* Reachable while signed in: the emailed links create a session first. */}
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/confirm-email" element={<ConfirmEmail />} />
             <Route path="/onboarding" element={<Onboarding />} />
 
             <Route

@@ -72,7 +72,33 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName ?? '' } },
+      options: {
+        data: { full_name: fullName ?? '' },
+        emailRedirectTo: `${window.location.origin}/confirm-email`,
+      },
+    })
+    return { data, error }
+  }, [])
+
+  /** Sends the "set a new password" email. Always resolves — see ForgotPassword. */
+  const requestPasswordReset = useCallback(async (email) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    return { data, error }
+  }, [])
+
+  /** Only valid while the recovery link's session is active. */
+  const updatePassword = useCallback(async (password) => {
+    const { data, error } = await supabase.auth.updateUser({ password })
+    return { data, error }
+  }, [])
+
+  const resendConfirmation = useCallback(async (email) => {
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/confirm-email` },
     })
     return { data, error }
   }, [])
@@ -155,6 +181,9 @@ export function AuthProvider({ children }) {
       signIn,
       signInWithGoogle,
       signOut,
+      requestPasswordReset,
+      updatePassword,
+      resendConfirmation,
       updateProfile,
       updatePreferences,
       refresh,
@@ -170,6 +199,9 @@ export function AuthProvider({ children }) {
       signIn,
       signInWithGoogle,
       signOut,
+      requestPasswordReset,
+      updatePassword,
+      resendConfirmation,
       updateProfile,
       updatePreferences,
       refresh,

@@ -33,11 +33,28 @@ npm run dev
 > Only ever put the anon key in `.env`. Anything in a `VITE_` variable is bundled into the public
 > JavaScript, so the `service_role` key must never go there — it bypasses row-level security.
 
-### Google sign-in
+### Auth configuration
 
-Email/password works as soon as the schema is in place. For the Google button, enable the Google
-provider under Authentication → Providers in Supabase and supply a Google OAuth client ID/secret.
-Until then that button returns a clear "not enabled" message.
+**Redirect URLs.** Password reset and email confirmation send people back to the app, and Supabase
+only honours URLs on its allowlist. Under Authentication → URL Configuration add:
+
+```
+http://localhost:5174/**      (development)
+https://your-domain/**        (once deployed)
+```
+
+Without these, the emailed links bounce to the Site URL and the landing pages never see a token.
+
+**Email confirmation.** Toggle "Confirm email" on under Authentication → Providers → Email. Sign-up
+then returns no session, and the app shows a "confirm your email" screen with a resend option
+instead of dropping the user straight in.
+
+**SMTP — required before real users.** Supabase's built-in mailer is rate-limited to a handful of
+messages per hour and is meant for testing only; it returns HTTP 429 quickly. Password reset is
+effectively unusable until you configure your own SMTP provider under Authentication → Emails.
+
+**Google sign-in.** Enable the Google provider under Authentication → Providers and supply a Google
+OAuth client ID/secret. Until then the button returns a clear "not enabled" message.
 
 ## Structure
 
@@ -50,22 +67,29 @@ src/
   components/auth/           RequireAuth, GoogleMark
   components/layout/         AppLayout, Sidebar, TopBar
   components/pomodoro/       RevealImage, SessionSetupDialog, SessionDrawer
-  components/ui/             Card, Button, StatusTag, ProgressBar, ToggleSwitch,
-                             SegmentedControl, Checkbox, Stepper, Avatar
-  data/mock.js               placeholder content not yet moved to Supabase
-  pages/                     SignIn, Onboarding, SetupRequired, Dashboard,
-                             ClassPlanner, DailyPlanner, Pomodoro, Settings
+  components/ui/             Card, Button, Dialog, StatusTag, ProgressBar,
+                             ToggleSwitch, SegmentedControl, Checkbox, Stepper, Avatar
+  hooks/                     useStudyStats, useSessionTaskOptions
+  lib/                       supabase client, date helpers
+  pages/                     SignIn, ForgotPassword, ResetPassword, ConfirmEmail,
+                             Onboarding, SetupRequired, Dashboard, ClassPlanner,
+                             DailyPlanner, Pomodoro, Settings
 supabase/migrations/         SQL to run against your project
 ```
 
-Routes: `/signin`, `/onboarding`, `/dashboard`, `/classes`, `/planner`, `/pomodoro`, `/settings`.
-Everything except `/signin` requires a session; new accounts are sent through `/onboarding` once.
+Routes: `/signin`, `/forgot-password`, `/reset-password`, `/confirm-email`, `/onboarding`, `/dashboard`, `/classes`, `/planner`, `/pomodoro`, `/settings`.
+The auth routes are public — the emailed links create a session before landing, so they must be
+reachable either way. Everything else requires a session, and new accounts pass through
+`/onboarding` once.
 
 ## Status
 
-Auth, onboarding, profile and preferences are backed by Supabase. Class Planner, Daily Planner, the
-Dashboard lists and the Pomodoro activity log still read from `src/data/mock.js` — those move over
-in later phases.
+Every page reads and writes real data: profiles, preferences, classes, assignments, planner events,
+tasks and pomodoro history. There is no mock data left in the app.
+
+Known gaps: the search box, notification bell and help icon are not wired up; the appearance
+toggle stores a theme nothing reads yet; the notification switches persist but nothing sends
+reminders; and events cannot repeat, so a class that meets weekly needs re-creating each time.
 
 ## Reveal images
 

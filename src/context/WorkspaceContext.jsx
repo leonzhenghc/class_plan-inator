@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from './AuthContext.jsx'
 
@@ -20,8 +20,12 @@ export function WorkspaceProvider({ children }) {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  /** Monotonic run id; a stale in-flight fetch is discarded once a newer run starts. */
+  const loadRef = useRef(0)
 
   const load = useCallback(async () => {
+    const run = ++loadRef.current
+
     if (!user) {
       setClasses([])
       setAssignments([])
@@ -51,8 +55,16 @@ export function WorkspaceProvider({ children }) {
         .limit(500),
     ])
 
+    // A newer run owns the state now — typically the user signed out mid-fetch.
+    if (run !== loadRef.current) return
+
     setError(
-      classResult.error ?? assignmentResult.error ?? taskResult.error ?? eventResult.error ?? null,
+      classResult.error ??
+        assignmentResult.error ??
+        taskResult.error ??
+        eventResult.error ??
+        sessionResult.error ??
+        null,
     )
     setClasses(classResult.data ?? [])
     setAssignments(assignmentResult.data ?? [])

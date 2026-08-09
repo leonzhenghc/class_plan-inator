@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { BellRing, LogOut, Moon, Pencil, Timer } from 'lucide-react'
+import { BellRing, LogOut, Moon, Pencil, Sparkles, Timer } from 'lucide-react'
 import TopBar from '../components/layout/TopBar.jsx'
 import Card, { CardTitle } from '../components/ui/Card.jsx'
 import Button from '../components/ui/Button.jsx'
 import ToggleSwitch from '../components/ui/ToggleSwitch.jsx'
 import SegmentedControl from '../components/ui/SegmentedControl.jsx'
 import Avatar from '../components/ui/Avatar.jsx'
+import ChipGroup from '../components/ui/ChipGroup.jsx'
+import { HOBBIES, STUDY_STYLES, TRAITS } from '../data/personality.js'
 import { cn } from '../components/ui/cn.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -45,6 +47,12 @@ export default function Settings() {
     deepWork: preferences?.deep_work_mode ?? false,
   })
   const [theme, setTheme] = useState(preferences?.theme ?? 'light')
+  const [personality, setPersonality] = useState({
+    traits: savedProfile?.personality_traits ?? [],
+    hobbies: savedProfile?.hobbies ?? [],
+    studyStyles: savedProfile?.study_styles ?? [],
+    aboutMe: savedProfile?.about_me ?? '',
+  })
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState(null)
 
@@ -62,6 +70,12 @@ export default function Settings() {
       deepWork: preferences?.deep_work_mode ?? false,
     })
     setTheme(preferences?.theme ?? 'light')
+    setPersonality({
+      traits: savedProfile?.personality_traits ?? [],
+      hobbies: savedProfile?.hobbies ?? [],
+      studyStyles: savedProfile?.study_styles ?? [],
+      aboutMe: savedProfile?.about_me ?? '',
+    })
     setStatus(null)
   }
 
@@ -73,6 +87,10 @@ export default function Settings() {
       updateProfile({
         full_name: profile.fullName.trim(),
         display_name: profile.displayName.trim(),
+        personality_traits: personality.traits,
+        hobbies: personality.hobbies,
+        study_styles: personality.studyStyles,
+        about_me: personality.aboutMe.trim(),
       }),
       updatePreferences({
         focus_minutes: Number(pomodoro.focus) || 25,
@@ -220,6 +238,60 @@ export default function Settings() {
           </Card>
 
         </div>
+
+        {/* ------------------------------- Personality ------------------------------- */}
+        <Card className="mt-6 px-7 py-6">
+          <CardTitle icon={Sparkles}>About you</CardTitle>
+          <p className="mt-1 text-[15px] text-gray-500">
+            Context for your study assistant. Change it whenever you like.
+          </p>
+
+          <div className="mt-6 space-y-6">
+            <ChipGroup
+              label="How would you describe yourself?"
+              options={TRAITS}
+              value={personality.traits}
+              onChange={(update) =>
+                setPersonality((current) => ({ ...current, traits: update(current.traits) }))
+              }
+            />
+            <ChipGroup
+              label="What are you into outside class?"
+              options={HOBBIES}
+              value={personality.hobbies}
+              onChange={(update) =>
+                setPersonality((current) => ({ ...current, hobbies: update(current.hobbies) }))
+              }
+              allowCustom
+              placeholder="Something else you enjoy"
+            />
+            <ChipGroup
+              label="How do you like to study?"
+              options={STUDY_STYLES}
+              value={personality.studyStyles}
+              onChange={(update) =>
+                setPersonality((current) => ({ ...current, studyStyles: update(current.studyStyles) }))
+              }
+            />
+            <div>
+              <label
+                htmlFor="aboutMe"
+                className="mb-2 block text-[15px] font-semibold text-gray-800"
+              >
+                Anything else worth knowing?
+              </label>
+              <textarea
+                id="aboutMe"
+                rows={3}
+                value={personality.aboutMe}
+                onChange={(event) =>
+                  setPersonality((current) => ({ ...current, aboutMe: event.target.value }))
+                }
+                className="w-full resize-y rounded-xl border border-gray-200 px-4 py-3 text-[15px] leading-relaxed text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+              />
+            </div>
+          </div>
+        </Card>
 
         {/* -------------------------------- Appearance ------------------------------- */}
         <div className="mt-6 flex items-center gap-5 rounded-2xl border border-gray-200 bg-gray-50 px-7 py-6">

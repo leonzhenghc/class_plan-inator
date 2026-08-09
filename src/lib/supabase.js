@@ -38,6 +38,18 @@ export function friendlyAuthError(error) {
   if (/provider is not enabled/i.test(message)) {
     return 'Google sign-in is not enabled on this Supabase project yet.'
   }
-  if (/rate limit|too many/i.test(message)) return 'Too many attempts — wait a moment and retry.'
+  if (/email address .* is invalid|email_address_invalid/i.test(message)) {
+    return 'That email address was rejected — check it for typos.'
+  }
+  // Supabase's per-address cooldown, phrased as "for security purposes…".
+  if (/for security purposes/i.test(message)) {
+    return message.replace(/^for security purposes,?\s*/i, 'Just sent one — ')
+  }
+  if (/rate limit|too many/i.test(message)) {
+    return 'Too many emails sent recently. Wait a few minutes and try again.'
+  }
+  if (/same as the old password|should be different/i.test(message)) {
+    return 'That is already your current password — pick a different one.'
+  }
   return message
 }
