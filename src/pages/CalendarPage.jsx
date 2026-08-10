@@ -68,6 +68,7 @@ export default function CalendarPage() {
   const setAnchor = useCallback((next) => patchParams({ date: toDateKey(next) }), [patchParams])
 
   const step = (direction) => {
+    if (view === 'month') setSelected(null)
     if (view === 'month') setAnchor(addMonths(anchor, direction))
     else if (view === 'week') setAnchor(addDays(anchor, direction * 7))
     else setAnchor(addDays(anchor, direction))
@@ -157,7 +158,10 @@ export default function CalendarPage() {
 
           <button
             type="button"
-            onClick={() => setAnchor(new Date())}
+            onClick={() => {
+              if (view === 'month') setSelected(null)
+              setAnchor(new Date())
+            }}
             disabled={isNow}
             className={cn(
               'h-9 cursor-pointer rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-surface-2',
@@ -172,7 +176,7 @@ export default function CalendarPage() {
             <Button
               size="sm"
               icon={Plus}
-              onClick={() => openCreate(view === 'month' ? (selected ?? new Date()) : anchor, 9)}
+              onClick={() => openCreate(view === 'month' ? (selected ?? anchor) : anchor, 9)}
             >
               New block
             </Button>

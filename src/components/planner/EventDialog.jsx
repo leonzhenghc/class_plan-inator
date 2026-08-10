@@ -24,6 +24,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
     : editing
   const repeats = Boolean(series?.repeat_freq)
   const [values, setValues] = useState({
+    dateKey: '',
     title: '',
     subtitle: '',
     kind: 'study',
@@ -44,6 +45,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
   useEffect(() => {
     if (!open) return
     setValues({
+      dateKey: dateKey ?? '',
       title: editing?.title ?? '',
       subtitle: editing?.subtitle ?? '',
       kind: editing?.kind ?? 'study',
@@ -59,13 +61,18 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
     setError(null)
     setConfirmingDelete(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editing, defaultStart])
+  }, [open, editing, defaultStart, dateKey])
 
   const set = (field) => (event) =>
     setValues((current) => ({ ...current, [field]: event.target.value }))
 
   const submit = async (event) => {
     event.preventDefault()
+
+    if (!values.dateKey) {
+      setError('Pick a day for this block.')
+      return
+    }
 
     const starts = timeInputToHours(values.start)
     const ends = timeInputToHours(values.end)
@@ -90,7 +97,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
       title: values.title.trim(),
       subtitle: values.subtitle.trim(),
       kind: values.kind,
-      event_date: dateKey,
+      event_date: values.dateKey,
       starts_at: starts,
       ends_at: ends,
       tag: values.tag.trim(),
@@ -204,6 +211,21 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             onChange={set('subtitle')}
             placeholder="Room 402 — Lecture on Neuroplasticity"
             className={inputClass}
+          />
+        </Field>
+
+        <Field
+          id="event-date"
+          label="Day"
+          hint={editing ? 'Use drag to move a block to another day' : undefined}
+        >
+          <input
+            id="event-date"
+            type="date"
+            value={values.dateKey}
+            onChange={set('dateKey')}
+            disabled={Boolean(editing)}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
           />
         </Field>
 

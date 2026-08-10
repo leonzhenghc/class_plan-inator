@@ -45,6 +45,12 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
   /** Live drag state; null when idle. Kept in state so the block re-renders. */
   const [drag, setDrag] = useState(null)
   const [now, setNow] = useState(currentHourValue)
+  /**
+   * Whether the last gesture actually moved. A click fires after every
+   * pointerup, by which time `drag` has already reset, so the onClick guard
+   * can't tell the two apart — this flag can.
+   */
+  const movedRef = useRef(false)
 
   useEffect(() => {
     const id = setInterval(() => setNow(currentHourValue()), 60_000)
@@ -60,6 +66,9 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
 
     const onMove = (event) => {
       const delta = (event.clientY - drag.originY) * hoursPerPixel
+      // A few pixels of travel separates a drag from a click (pointer jitter during
+      // a click rarely exceeds this).
+      if (Math.abs(event.clientY - drag.originY) > 4) movedRef.current = true
       setDrag((current) => {
         if (!current) return current
         if (current.mode === 'move') {
@@ -78,6 +87,10 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
     }
 
     const onUp = () => {
+      // Click follows pointerup synchronously, so it can consume the flag; if no
+      // click lands on a block (released elsewhere), clear it here instead of
+      // swallowing the next genuine click.
+      if (movedRef.current) setTimeout(() => { movedRef.current = false }, 0)
       setDrag((current) => {
         if (current && (current.previewStart !== current.startsAt || current.previewEnd !== current.endsAt)) {
           onCommit(current.event, {
@@ -102,6 +115,7 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
     event.stopPropagation()
     const startsAt = Number(item.starts_at)
     const endsAt = Number(item.ends_at)
+    movedRef.current = false
     setDrag({
       mode,
       event: item,
@@ -194,7 +208,13 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
                       role="button"
                       tabIndex={0}
                       onPointerDown={(event) => beginDrag('move')(event, item)}
-                      onClick={() => !dragging && onOpen?.(item)}
+                      onClick={() => {
+                        if (movedRef.current) {
+                          movedRef.current = false
+                          return
+                        }
+                        onOpen?.(item)
+                      }}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') onOpen?.(item)
                       }}
