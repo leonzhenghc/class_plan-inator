@@ -45,8 +45,8 @@ export default function ChipGroup({
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-3">
-        <span className="text-[15px] font-semibold text-gray-800">{label}</span>
-        {hint ? <span className="text-[13px] text-gray-400">{hint}</span> : null}
+        <span className="text-[15px] font-semibold text-ink">{label}</span>
+        {hint ? <span className="text-[13px] text-ink-4">{hint}</span> : null}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -62,7 +62,7 @@ export default function ChipGroup({
                 'cursor-pointer rounded-full border px-3.5 py-2 text-[14px] font-medium transition-colors',
                 selected
                   ? 'border-brand-600 bg-brand-600 text-white'
-                  : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50',
+                  : 'border-line bg-surface text-ink-2 hover:border-line hover:bg-surface-2',
               )}
             >
               {item}
@@ -99,13 +99,13 @@ export default function ChipGroup({
             }}
             placeholder={placeholder}
             aria-label={placeholder}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-gray-200 px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-line px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
           />
           <button
             type="button"
             onClick={addCustom}
             aria-label="Add"
-            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-surface-2 text-ink-2 transition-colors hover:bg-line"
           >
             <Plus className="h-5 w-5" strokeWidth={2.5} />
           </button>

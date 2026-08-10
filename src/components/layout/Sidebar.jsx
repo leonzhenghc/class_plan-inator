@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
+  Calendar,
   CalendarDays,
   ClipboardList,
   Copy,
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { to: '/classes', label: 'Class Planner', icon: CalendarDays },
   { to: '/planner', label: 'Daily Planner', icon: ClipboardList },
+  { to: '/calendar', label: 'Calendar', icon: Calendar },
   { to: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -38,7 +40,7 @@ export default function Sidebar({ className, onNavigate }) {
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-20 flex w-60 flex-col border-r border-gray-200 bg-white',
+        'fixed inset-y-0 left-0 z-20 flex w-60 flex-col border-r border-line bg-surface',
         className,
       )}
     >
@@ -48,7 +50,7 @@ export default function Sidebar({ className, onNavigate }) {
         </div>
         <div className="leading-tight">
           <p className="text-[22px] font-extrabold tracking-tight text-brand-600">Clarity</p>
-          <p className="text-xs font-medium text-gray-500">Student Workspace</p>
+          <p className="text-xs font-medium text-ink-3">Student Workspace</p>
         </div>
       </div>
 
@@ -62,8 +64,8 @@ export default function Sidebar({ className, onNavigate }) {
               cn(
                 'relative flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold transition-colors',
                 isActive
-                  ? 'bg-brand-50 text-brand-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  ? 'bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-300'
+                  : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
               )
             }
           >
@@ -73,7 +75,7 @@ export default function Sidebar({ className, onNavigate }) {
                   <span className="absolute top-2 bottom-2 -left-3 w-1 rounded-r-full bg-brand-600" />
                 ) : null}
                 <Icon
-                  className={cn('h-[19px] w-[19px]', isActive ? 'text-brand-600' : 'text-gray-500')}
+                  className={cn('h-[19px] w-[19px]', isActive ? 'text-brand-600' : 'text-ink-3')}
                   strokeWidth={2}
                 />
                 {label}
@@ -93,14 +95,14 @@ export default function Sidebar({ className, onNavigate }) {
           Start Study Session
         </button>
 
-        <div className="my-5 border-t border-gray-200" />
+        <div className="my-5 border-t border-line" />
 
         <NavLink
           to="/settings"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded-xl px-1 py-1 text-[15px] font-semibold text-gray-700 transition-colors hover:text-brand-600"
+          className="flex items-center gap-3 rounded-xl px-1 py-1 text-[15px] font-semibold text-ink-2 transition-colors hover:text-brand-600"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-500/15">
             <User className="h-[18px] w-[18px] text-brand-600" strokeWidth={2} />
           </span>
           Profile Settings

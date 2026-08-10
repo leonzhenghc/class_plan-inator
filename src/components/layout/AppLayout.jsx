@@ -3,7 +3,7 @@ import Sidebar from './Sidebar.jsx'
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-2">
       <Sidebar />
       <div className="ml-60 flex min-h-screen flex-col">
         <Outlet />

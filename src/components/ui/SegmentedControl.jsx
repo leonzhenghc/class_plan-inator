@@ -6,7 +6,7 @@ export default function SegmentedControl({
   onChange,
   className,
   size = 'md',
-  activeClassName = 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200',
+  activeClassName = 'bg-surface text-ink shadow-sm ring-1 ring-line',
 }) {
   const sizes = {
     sm: 'h-9 px-4 text-[13px]',
@@ -14,7 +14,7 @@ export default function SegmentedControl({
   }
 
   return (
-    <div className={cn('inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1', className)}>
+    <div className={cn('inline-flex items-center gap-1 rounded-xl bg-surface-2 p-1', className)}>
       {options.map((option) => {
         const active = option.value === value
         return (
@@ -25,7 +25,7 @@ export default function SegmentedControl({
             className={cn(
               'cursor-pointer rounded-lg font-semibold transition-colors',
               sizes[size],
-              active ? activeClassName : 'text-gray-500 hover:text-gray-700',
+              active ? activeClassName : 'text-ink-3 hover:text-ink-2',
             )}
           >
             {option.label}

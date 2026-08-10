@@ -1,17 +1,17 @@
 import { cn } from './cn.js'
 
 const TONES = {
-  due: 'bg-red-100 text-red-600',
-  progress: 'bg-emerald-100 text-emerald-700',
-  todo: 'bg-gray-100 text-gray-500',
-  done: 'bg-emerald-100 text-emerald-700',
-  info: 'bg-blue-100 text-blue-700',
-  stem: 'bg-emerald-100 text-emerald-700',
-  humanities: 'bg-blue-100 text-blue-700',
-  arts: 'bg-violet-100 text-violet-700',
-  social: 'bg-sky-100 text-sky-700',
-  focus: 'bg-white/70 text-slate-700',
-  brand: 'bg-brand-100 text-brand-700',
+  due: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400',
+  progress: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+  todo: 'bg-surface-2 text-ink-3',
+  done: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+  info: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300',
+  stem: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+  humanities: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300',
+  arts: 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300',
+  social: 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300',
+  focus: 'bg-surface/70 text-ink-2',
+  brand: 'bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300',
 }
 
 export default function StatusTag({ tone = 'todo', caps = true, className, children }) {

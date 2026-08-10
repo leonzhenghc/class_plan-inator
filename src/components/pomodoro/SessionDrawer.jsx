@@ -37,19 +37,19 @@ export default function SessionDrawer({
       aria-label="Session details"
       aria-hidden={!open}
       className={cn(
-        'absolute inset-y-0 right-0 z-30 flex w-[380px] max-w-[88vw] flex-col bg-gray-50 shadow-2xl',
+        'absolute inset-y-0 right-0 z-30 flex w-[380px] max-w-[88vw] flex-col bg-surface-2 shadow-2xl',
         'transition-transform duration-300 ease-out',
         open ? 'translate-x-0' : 'pointer-events-none translate-x-full',
       )}
     >
-      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
-        <p className="text-[15px] font-bold text-gray-900">Session details</p>
+      <div className="flex items-center justify-between border-b border-line bg-surface px-5 py-4">
+        <p className="text-[15px] font-bold text-ink">Session details</p>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close session details"
           tabIndex={open ? 0 : -1}
-          className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+          className="cursor-pointer rounded-lg p-2 text-ink-4 transition-colors hover:bg-surface-2 hover:text-ink-2"
         >
           <X className="h-5 w-5" strokeWidth={2.25} />
         </button>
@@ -57,12 +57,12 @@ export default function SessionDrawer({
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
         <Card className="px-5 py-4">
-          <p className="text-[15px] font-bold text-gray-900">Session Progress</p>
+          <p className="text-[15px] font-bold text-ink">Session Progress</p>
           <div className="mt-3 flex items-end justify-between gap-4">
             <p className="text-2xl leading-tight font-extrabold tracking-tight text-brand-600">
               {config ? `Round ${Math.min(round, config.rounds)} of ${config.rounds}` : 'Not started'}
             </p>
-            <p className="shrink-0 pb-1 text-[13px] text-gray-500">
+            <p className="shrink-0 pb-1 text-[13px] text-ink-3">
               {Math.round(roundProgress)}% Completed
             </p>
           </div>
@@ -71,19 +71,19 @@ export default function SessionDrawer({
 
         <Card className="px-5 py-4">
           <div className="flex items-center justify-between">
-            <p className="flex items-center gap-2 text-[13px] font-bold tracking-[0.08em] text-gray-900 uppercase">
+            <p className="flex items-center gap-2 text-[13px] font-bold tracking-[0.08em] text-ink uppercase">
               <ListChecks className="h-[18px] w-[18px] text-brand-600" strokeWidth={2} />
               This session
             </p>
             {tasks.length > 0 ? (
-              <span className="text-[13px] text-gray-500">
+              <span className="text-[13px] text-ink-3">
                 {doneTaskIds.length}/{tasks.length} done
               </span>
             ) : null}
           </div>
 
           {tasks.length === 0 ? (
-            <p className="mt-3 text-[15px] text-gray-500">
+            <p className="mt-3 text-[15px] text-ink-3">
               No tasks picked for this session.{' '}
               <button
                 type="button"
@@ -110,12 +110,12 @@ export default function SessionDrawer({
                       <span
                         className={cn(
                           'block text-[15px] font-semibold',
-                          done ? 'text-gray-400 line-through' : 'text-gray-800',
+                          done ? 'text-ink-4 line-through' : 'text-ink',
                         )}
                       >
                         {task.title}
                       </span>
-                      <span className="mt-0.5 block text-[13px] text-gray-500">{task.meta}</span>
+                      <span className="mt-0.5 block text-[13px] text-ink-3">{task.meta}</span>
                     </span>
                   </li>
                 )
@@ -126,12 +126,12 @@ export default function SessionDrawer({
 
         <Card className="px-5 py-4">
           <div className="flex items-center justify-between">
-            <p className="text-[15px] font-bold text-gray-900">Activity Log</p>
-            <span className="text-[13px] text-gray-500">{formatMinutes(todayMinutes)} today</span>
+            <p className="text-[15px] font-bold text-ink">Activity Log</p>
+            <span className="text-[13px] text-ink-3">{formatMinutes(todayMinutes)} today</span>
           </div>
 
           {recent.length === 0 ? (
-            <p className="mt-3 text-[15px] leading-relaxed text-gray-500">
+            <p className="mt-3 text-[15px] leading-relaxed text-ink-3">
               Finished blocks land here. Skipped ones don&apos;t count.
             </p>
           ) : (
@@ -145,8 +145,8 @@ export default function SessionDrawer({
                     )}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[15px] font-bold text-gray-900">{entry.label}</p>
-                    <p className="mt-0.5 text-[13px] text-gray-500">
+                    <p className="text-[15px] font-bold text-ink">{entry.label}</p>
+                    <p className="mt-0.5 text-[13px] text-ink-3">
                       Completed at{' '}
                       {new Date(entry.completed_at).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -154,7 +154,7 @@ export default function SessionDrawer({
                       })}
                     </p>
                   </div>
-                  <span className="shrink-0 text-[13px] text-gray-500">
+                  <span className="shrink-0 text-[13px] text-ink-3">
                     {formatMinutes(entry.minutes)}
                   </span>
                 </li>
@@ -163,10 +163,10 @@ export default function SessionDrawer({
           )}
         </Card>
 
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-          <Lightbulb className="h-5 w-5 text-emerald-700" strokeWidth={2} />
-          <p className="mt-3 text-[15px] font-bold text-gray-900">Study Tip</p>
-          <p className="mt-2 text-[15px] leading-relaxed text-emerald-900/70">
+        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-5 py-4">
+          <Lightbulb className="h-5 w-5 text-emerald-700 dark:text-emerald-300" strokeWidth={2} />
+          <p className="mt-3 text-[15px] font-bold text-ink">Study Tip</p>
+          <p className="mt-2 text-[15px] leading-relaxed text-emerald-900/70 dark:text-emerald-200/70">
             Hydrate during your short breaks to maintain cognitive performance throughout long
             sessions.
           </p>

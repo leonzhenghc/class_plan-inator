@@ -18,28 +18,28 @@ const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_
 
 const KIND_THEMES = {
   class: {
-    block: 'bg-violet-100 hover:bg-violet-200/70',
+    block: 'bg-violet-100 dark:bg-violet-500/20 hover:bg-violet-200/70 dark:hover:bg-violet-500/30',
     accent: 'bg-brand-600',
     subtitle: 'text-brand-600',
-    time: 'text-gray-800',
+    time: 'text-ink',
   },
   study: {
-    block: 'bg-sky-100 hover:bg-sky-200/70',
+    block: 'bg-sky-100 dark:bg-sky-500/20 hover:bg-sky-200/70 dark:hover:bg-sky-500/30',
     accent: 'bg-sky-600',
-    subtitle: 'text-gray-600',
-    time: 'text-gray-800',
+    subtitle: 'text-ink-2',
+    time: 'text-ink',
   },
   break: {
-    block: 'bg-emerald-100 hover:bg-emerald-200/70',
+    block: 'bg-emerald-100 dark:bg-emerald-500/20 hover:bg-emerald-200/70 dark:hover:bg-emerald-500/30',
     accent: 'bg-emerald-600',
-    subtitle: 'text-emerald-700',
-    time: 'text-gray-700',
+    subtitle: 'text-emerald-700 dark:text-emerald-300',
+    time: 'text-ink-2',
   },
   personal: {
-    block: 'bg-gray-100 hover:bg-gray-200/70',
-    accent: 'bg-gray-400',
-    subtitle: 'text-gray-600',
-    time: 'text-gray-800',
+    block: 'bg-surface-2 hover:bg-line/70',
+    accent: 'bg-ink-4',
+    subtitle: 'text-ink-2',
+    time: 'text-ink',
   },
 }
 
@@ -96,10 +96,10 @@ export default function DailyPlanner() {
         <Card className="min-w-0 flex-1 px-8 py-7">
           <div className="flex items-start justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+              <h1 className="text-3xl font-extrabold tracking-tight text-ink">
                 {formatDayHeading(day)}
               </h1>
-              <p className="mt-2 text-[15px] text-gray-500">
+              <p className="mt-2 text-[15px] text-ink-3">
                 {dayEvents.length === 0
                   ? 'Nothing scheduled yet — click a time slot to add something.'
                   : `You have ${dayEvents.length} block${dayEvents.length === 1 ? '' : 's'} scheduled today.`}
@@ -122,7 +122,7 @@ export default function DailyPlanner() {
                   type="button"
                   aria-label={label}
                   onClick={() => shiftDay(delta)}
-                  className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:bg-gray-50"
+                  className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-line text-ink-2 transition-colors hover:bg-surface-2"
                 >
                   <Icon className="h-5 w-5" strokeWidth={2.25} />
                 </button>
@@ -130,11 +130,11 @@ export default function DailyPlanner() {
             </div>
           </div>
 
-          <div className="mt-7 border-t border-gray-200 pt-6">
+          <div className="mt-7 border-t border-line pt-6">
             <div className="relative pl-[104px]">
               {HOURS.map((hour) => (
-                <div key={hour} className="relative h-20 border-t border-gray-100 first:border-t-0">
-                  <span className="absolute top-0 -left-[104px] w-[84px] -translate-y-1/2 text-right text-[13px] font-medium text-gray-500">
+                <div key={hour} className="relative h-20 border-t border-line/60 first:border-t-0">
+                  <span className="absolute top-0 -left-[104px] w-[84px] -translate-y-1/2 text-right text-[13px] font-medium text-ink-3">
                     {formatHour(hour)}
                   </span>
                   {/* Clicking empty track opens the dialog pre-filled with that hour. */}
@@ -169,7 +169,7 @@ export default function DailyPlanner() {
                       <span className={cn('absolute inset-y-0 left-0 w-[5px]', theme.accent)} />
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="text-[17px] font-bold text-gray-900">{event.title}</p>
+                          <p className="text-[17px] font-bold text-ink">{event.title}</p>
                           {event.subtitle ? (
                             <p className={cn('mt-1 text-[15px]', theme.subtitle)}>
                               {event.subtitle}
@@ -196,16 +196,16 @@ export default function DailyPlanner() {
         {/* --------------------------------- Tasks -------------------------------- */}
         <Card className="flex w-[380px] shrink-0 flex-col self-stretch px-6 py-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Tasks</h2>
+            <h2 className="text-3xl font-extrabold tracking-tight text-ink">Tasks</h2>
             <span className="rounded-full bg-brand-600 px-3 py-1 text-[13px] font-bold text-white">
               {remaining} Left
             </span>
           </div>
 
           {loading ? (
-            <p className="mt-6 text-[15px] text-gray-400">Loading…</p>
+            <p className="mt-6 text-[15px] text-ink-4">Loading…</p>
           ) : dayTasks.length === 0 ? (
-            <p className="mt-6 text-[15px] leading-relaxed text-gray-500">
+            <p className="mt-6 text-[15px] leading-relaxed text-ink-3">
               No tasks for this day yet. Add one below and it will be waiting for you.
             </p>
           ) : (
@@ -213,7 +213,7 @@ export default function DailyPlanner() {
               {dayTasks.map((task) => (
                 <li
                   key={task.id}
-                  className="group flex items-start gap-3 rounded-xl border border-gray-200 px-4 py-3.5"
+                  className="group flex items-start gap-3 rounded-xl border border-line px-4 py-3.5"
                 >
                   <Checkbox
                     checked={task.done}
@@ -224,20 +224,20 @@ export default function DailyPlanner() {
                     <p
                       className={cn(
                         'text-[15px] font-semibold',
-                        task.done ? 'text-gray-400 line-through' : 'text-gray-800',
+                        task.done ? 'text-ink-4 line-through' : 'text-ink',
                       )}
                     >
                       {task.title}
                     </p>
                     {task.category ? (
-                      <p className="mt-0.5 text-[13px] text-gray-500">{task.category}</p>
+                      <p className="mt-0.5 text-[13px] text-ink-3">{task.category}</p>
                     ) : null}
                   </div>
                   <button
                     type="button"
                     onClick={() => deleteTask(task.id)}
                     aria-label={`Delete ${task.title}`}
-                    className="cursor-pointer rounded-lg p-1.5 text-gray-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    className="cursor-pointer rounded-lg p-1.5 text-ink-4 opacity-0 transition hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100"
                   >
                     <Trash2 className="h-4 w-4" strokeWidth={2.25} />
                   </button>
@@ -247,13 +247,13 @@ export default function DailyPlanner() {
           )}
 
           <form onSubmit={addTask} className="mt-auto pt-6">
-            <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white p-1.5 pl-4">
+            <div className="flex items-center gap-2 rounded-xl border border-line bg-surface p-1.5 pl-4">
               <input
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder="Add a new task..."
                 aria-label="Add a new task"
-                className="h-9 min-w-0 flex-1 text-[15px] text-gray-700 placeholder:text-gray-400 focus:outline-none"
+                className="h-9 min-w-0 flex-1 text-[15px] text-ink-2 placeholder:text-ink-4 focus:outline-none"
               />
               <button
                 type="submit"
@@ -263,7 +263,7 @@ export default function DailyPlanner() {
                 <Plus className="h-5 w-5" strokeWidth={2.5} />
               </button>
             </div>
-            <p className="mt-2 text-center text-[13px] text-gray-400">Press Enter to quick-add</p>
+            <p className="mt-2 text-center text-[13px] text-ink-4">Press Enter to quick-add</p>
           </form>
         </Card>
       </main>

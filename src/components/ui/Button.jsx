@@ -3,10 +3,10 @@ import { cn } from './cn.js'
 const VARIANTS = {
   primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm',
   soft: 'bg-brand-500 text-white hover:bg-brand-600',
-  outline: 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
-  outlineBrand: 'border border-brand-200 bg-white text-brand-600 hover:bg-brand-50',
-  ghost: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-  white: 'bg-white text-brand-600 hover:bg-brand-50 shadow-sm',
+  outline: 'border border-line bg-surface text-ink-2 hover:bg-surface-2',
+  outlineBrand: 'border border-brand-200 dark:border-brand-500/30 bg-surface text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/15',
+  ghost: 'bg-surface-2 text-ink-2 hover:bg-line',
+  white: 'bg-surface text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/15 shadow-sm',
 }
 
 const SIZES = {
@@ -49,7 +49,7 @@ export function IconButton({ icon: Icon, className, label, ...props }) {
       type="button"
       aria-label={label}
       className={cn(
-        'inline-flex cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700',
+        'inline-flex cursor-pointer items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink-2',
         className,
       )}
       {...props}

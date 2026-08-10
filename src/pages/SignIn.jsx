@@ -90,25 +90,25 @@ export default function SignIn() {
         }
       >
         <div className="flex flex-col items-center gap-4 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-            <MailCheck className="h-6 w-6 text-emerald-600" strokeWidth={2} />
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20">
+            <MailCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
           </span>
-          <p className="text-[15px] leading-relaxed text-gray-600">
-            We sent a link to <span className="font-semibold text-gray-900">{form.email}</span>.
+          <p className="text-[15px] leading-relaxed text-ink-2">
+            We sent a link to <span className="font-semibold text-ink">{form.email}</span>.
             Open it to finish setting up — check spam if it hasn&apos;t arrived.
           </p>
 
           {error ? (
             <p
               role="alert"
-              className="w-full rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600"
+              className="w-full rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400"
             >
               {error}
             </p>
           ) : null}
 
           {resent ? (
-            <p className="text-[15px] font-semibold text-emerald-600">Sent again.</p>
+            <p className="text-[15px] font-semibold text-emerald-600 dark:text-emerald-400">Sent again.</p>
           ) : (
             <button
               type="button"
@@ -152,16 +152,16 @@ export default function SignIn() {
         type="button"
         onClick={withGoogle}
         disabled={busy}
-        className="flex h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-gray-200 text-[15px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-line text-[15px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleMark className="h-5 w-5" />
         Continue with Google
       </button>
 
       <div className="my-6 flex items-center gap-4">
-        <span className="h-px flex-1 bg-gray-200" />
-        <span className="text-[13px] font-medium text-gray-400">or</span>
-        <span className="h-px flex-1 bg-gray-200" />
+        <span className="h-px flex-1 bg-line" />
+        <span className="text-[13px] font-medium text-ink-4">or</span>
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <form onSubmit={submit} className="space-y-4">
@@ -188,7 +188,7 @@ export default function SignIn() {
 
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-3">
-            <label htmlFor="password" className="text-[13px] font-medium text-gray-600">
+            <label htmlFor="password" className="text-[13px] font-medium text-ink-2">
               Password
             </label>
             {isSignUp ? null : (
@@ -208,17 +208,17 @@ export default function SignIn() {
             onChange={update('password')}
             autoComplete={isSignUp ? 'new-password' : 'current-password'}
             required
-            className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+            className="h-12 w-full rounded-xl border border-line px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
           />
           {isSignUp ? (
-            <p className="mt-1.5 text-[13px] text-gray-400">At least 8 characters</p>
+            <p className="mt-1.5 text-[13px] text-ink-4">At least 8 characters</p>
           ) : null}
         </div>
 
         {error ? (
           <p
             role="alert"
-            className="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600"
+            className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400"
           >
             <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={2.25} />
             {error}

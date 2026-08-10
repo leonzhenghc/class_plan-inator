@@ -73,14 +73,14 @@ export default function SessionSetupDialog({
         aria-modal="true"
         aria-labelledby="session-setup-title"
         tabIndex={-1}
-        className="relative flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none"
+        className="relative flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-2xl bg-surface shadow-2xl focus:outline-none"
       >
         <div className="px-7 pt-5 pb-5">
           <button
             type="button"
             onClick={onDismiss}
             aria-label="Close"
-            className="-ml-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="-ml-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-ink-4 transition-colors hover:bg-surface-2 hover:text-ink-2"
           >
             <X className="h-[18px] w-[18px]" strokeWidth={2.25} />
           </button>
@@ -88,7 +88,7 @@ export default function SessionSetupDialog({
           <h2 id="session-setup-title" className="mt-3 text-2xl font-extrabold tracking-tight">
             Set up your session
           </h2>
-          <p className="mt-1 text-[15px] text-gray-500">
+          <p className="mt-1 text-[15px] text-ink-3">
             About {totalMinutes} min in total, including breaks.
           </p>
         </div>
@@ -120,14 +120,14 @@ export default function SessionSetupDialog({
           {/* --------------------------------- Tasks -------------------------------- */}
           <div className="mt-7">
             <div className="mb-3 flex items-baseline justify-between gap-2">
-              <h3 className="text-[15px] font-semibold text-gray-800">What are you working on?</h3>
-              <span className="text-[13px] text-gray-400">
+              <h3 className="text-[15px] font-semibold text-ink">What are you working on?</h3>
+              <span className="text-[13px] text-ink-4">
                 {taskIds.length} selected · optional
               </span>
             </div>
 
             {sessionTaskOptions.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-gray-300 px-4 py-4 text-[13px] leading-relaxed text-gray-500">
+              <p className="rounded-xl border border-dashed border-line px-4 py-4 text-[13px] leading-relaxed text-ink-3">
                 Nothing outstanding right now. Assignments and today&apos;s tasks show up here.
               </p>
             ) : (
@@ -140,8 +140,8 @@ export default function SessionSetupDialog({
                       className={cn(
                         'flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors',
                         checked
-                          ? 'border-brand-300 bg-brand-50/60'
-                          : 'border-gray-200 hover:bg-gray-50',
+                          ? 'border-brand-300 dark:border-brand-500/40 bg-brand-50/60 dark:bg-brand-500/10'
+                          : 'border-line hover:bg-surface-2',
                       )}
                     >
                       <Checkbox
@@ -150,19 +150,19 @@ export default function SessionSetupDialog({
                         label={task.title}
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[15px] font-semibold text-gray-800">
+                        <span className="block text-[15px] font-semibold text-ink">
                           {task.title}
                         </span>
                         <span
                           className={cn(
                             'mt-0.5 block text-[13px]',
-                            task.urgent ? 'text-red-500' : 'text-gray-500',
+                            task.urgent ? 'text-red-500 dark:text-red-400' : 'text-ink-3',
                           )}
                         >
                           {task.meta}
                         </span>
                       </span>
-                      <span className="shrink-0 pt-0.5 text-[11px] font-bold tracking-[0.06em] text-gray-400 uppercase">
+                      <span className="shrink-0 pt-0.5 text-[11px] font-bold tracking-[0.06em] text-ink-4 uppercase">
                         {task.source}
                       </span>
                     </label>
@@ -176,16 +176,16 @@ export default function SessionSetupDialog({
           {/* --------------------------------- Image -------------------------------- */}
           <div className="mt-7">
             <div className="mb-3 flex items-baseline justify-between gap-2">
-              <h3 className="text-[15px] font-semibold text-gray-800">Reveal image</h3>
-              <span className="text-[13px] text-gray-400">Unblurs as you focus</span>
+              <h3 className="text-[15px] font-semibold text-ink">Reveal image</h3>
+              <span className="text-[13px] text-ink-4">Unblurs as you focus</span>
             </div>
 
             {revealImages.length === 0 ? (
-              <div className="flex items-center gap-3 rounded-xl border border-dashed border-gray-300 px-4 py-4">
-                <ImageOff className="h-5 w-5 shrink-0 text-gray-400" strokeWidth={1.75} />
-                <p className="text-[13px] leading-relaxed text-gray-500">
+              <div className="flex items-center gap-3 rounded-xl border border-dashed border-line px-4 py-4">
+                <ImageOff className="h-5 w-5 shrink-0 text-ink-4" strokeWidth={1.75} />
+                <p className="text-[13px] leading-relaxed text-ink-3">
                   No images yet — drop some into{' '}
-                  <span className="font-medium text-gray-700">src/assets/reveal/</span> and they
+                  <span className="font-medium text-ink-2">src/assets/reveal/</span> and they
                   will show up here.
                 </p>
               </div>
@@ -196,7 +196,7 @@ export default function SessionSetupDialog({
                   onSelect={() => setImage('auto')}
                   label="Auto"
                 >
-                  <span className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-brand-50 text-brand-600">
+                  <span className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-brand-50 dark:bg-brand-500/15 text-brand-600">
                     <Shuffle className="h-5 w-5" strokeWidth={2} />
                     <span className="text-[11px] font-bold tracking-wide uppercase">Rotate</span>
                   </span>
@@ -217,7 +217,7 @@ export default function SessionSetupDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-7 py-5">
+        <div className="flex items-center justify-end gap-3 border-t border-line px-7 py-5">
           {hasExistingSession ? (
             <Button type="button" variant="outline" onClick={onDismiss}>
               Cancel
@@ -243,7 +243,7 @@ function ImageTile({ selected, onSelect, label, children }) {
         'h-[84px] w-[84px] shrink-0 snap-start cursor-pointer overflow-hidden rounded-xl ring-2 transition',
         selected
           ? 'ring-brand-600 ring-offset-2'
-          : 'ring-gray-200 hover:ring-gray-300 ring-offset-0',
+          : 'ring-line hover:ring-ink-4 ring-offset-0',
       )}
     >
       {children}

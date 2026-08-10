@@ -122,7 +122,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-12">
+    <div className="min-h-screen bg-surface-2 px-6 py-12">
       <div className="mx-auto w-full max-w-[640px]">
         <div className="mb-8 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-sm">
@@ -130,7 +130,7 @@ export default function Onboarding() {
           </div>
           <div className="leading-tight">
             <p className="text-[22px] font-extrabold tracking-tight text-brand-600">Clarity</p>
-            <p className="text-xs font-medium text-gray-500">Student Workspace</p>
+            <p className="text-xs font-medium text-ink-3">Student Workspace</p>
           </div>
         </div>
 
@@ -145,7 +145,7 @@ export default function Onboarding() {
                     ? 'bg-brand-600 text-white'
                     : index === step
                       ? 'bg-brand-600 text-white'
-                      : 'bg-gray-200 text-gray-500',
+                      : 'bg-line text-ink-3',
                 )}
               >
                 {index < step ? <Check className="h-4 w-4" strokeWidth={3} /> : index + 1}
@@ -153,7 +153,7 @@ export default function Onboarding() {
               <span
                 className={cn(
                   'h-1 flex-1 rounded-full',
-                  index < step ? 'bg-brand-600' : 'bg-gray-200',
+                  index < step ? 'bg-brand-600' : 'bg-line',
                   index === STEPS.length - 1 && 'hidden',
                 )}
               />
@@ -161,11 +161,11 @@ export default function Onboarding() {
           ))}
         </ol>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
+        <div className="rounded-2xl border border-line bg-surface p-7 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+          <h1 className="text-2xl font-extrabold tracking-tight text-ink">
             {STEPS[step].title}
           </h1>
-          <p className="mt-1 text-[15px] text-gray-500">{STEPS[step].blurb}</p>
+          <p className="mt-1 text-[15px] text-ink-3">{STEPS[step].blurb}</p>
 
           <div className="mt-6">
             {step === 0 ? <ProfileStep value={details} onChange={setDetails} /> : null}
@@ -178,14 +178,14 @@ export default function Onboarding() {
           {error ? (
             <p
               role="alert"
-              className="mt-5 flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600"
+              className="mt-5 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400"
             >
               <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={2.25} />
               {error}
             </p>
           ) : null}
 
-          <div className="mt-7 flex items-center justify-between gap-4 border-t border-gray-200 pt-6">
+          <div className="mt-7 flex items-center justify-between gap-4 border-t border-line pt-6">
             <Button
               variant="outline"
               icon={ArrowLeft}
@@ -214,7 +214,7 @@ export default function Onboarding() {
         </div>
 
         {step === STEPS.length - 1 ? (
-          <p className="mt-4 text-center text-[13px] text-gray-400">
+          <p className="mt-4 text-center text-[13px] text-ink-4">
             Leave the class fields blank to skip — you can add them from the Class Planner.
           </p>
         ) : null}
@@ -252,14 +252,14 @@ function ProfileStep({ value, onChange }) {
           placeholder="Computer Science"
         />
         <div>
-          <label htmlFor="year" className="mb-2 block text-[13px] font-medium text-gray-600">
+          <label htmlFor="year" className="mb-2 block text-[13px] font-medium text-ink-2">
             Year
           </label>
           <select
             id="year"
             value={value.year}
             onChange={set('year')}
-            className="h-12 w-full cursor-pointer rounded-xl border border-gray-200 bg-white px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+            className="h-12 w-full cursor-pointer rounded-xl border border-line bg-surface px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
           >
             {YEARS.map((year) => (
               <option key={year}>{year}</option>
@@ -305,7 +305,7 @@ function PersonalityStep({ value, onChange }) {
       />
 
       <div>
-        <label htmlFor="aboutMe" className="mb-2 block text-[15px] font-semibold text-gray-800">
+        <label htmlFor="aboutMe" className="mb-2 block text-[15px] font-semibold text-ink">
           Anything else worth knowing?
         </label>
         <textarea
@@ -316,9 +316,9 @@ function PersonalityStep({ value, onChange }) {
             onChange((current) => ({ ...current, aboutMe: event.target.value }))
           }
           placeholder="I lose focus after about an hour, and I always leave essays too late."
-          className="w-full resize-y rounded-xl border border-gray-200 px-4 py-3 text-[15px] leading-relaxed text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+          className="w-full resize-y rounded-xl border border-line px-4 py-3 text-[15px] leading-relaxed text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
         />
-        <p className="mt-1.5 text-[13px] text-gray-400">
+        <p className="mt-1.5 text-[13px] text-ink-4">
           All of this is optional, and you can change it in Settings later.
         </p>
       </div>
@@ -335,9 +335,9 @@ function ClassesStep({ value, onChange }) {
   return (
     <div className="space-y-4">
       {value.map((item, index) => (
-        <div key={item.key} className="rounded-xl border border-gray-200 p-4">
+        <div key={item.key} className="rounded-xl border border-line p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-[13px] font-bold tracking-[0.08em] text-gray-500 uppercase">
+            <p className="text-[13px] font-bold tracking-[0.08em] text-ink-3 uppercase">
               Class {index + 1}
             </p>
             {value.length > 1 ? (
@@ -345,7 +345,7 @@ function ClassesStep({ value, onChange }) {
                 type="button"
                 onClick={() => onChange((current) => current.filter((row) => row.key !== item.key))}
                 aria-label={`Remove class ${index + 1}`}
-                className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                className="cursor-pointer rounded-lg p-1.5 text-ink-4 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4" strokeWidth={2.25} />
               </button>
@@ -371,7 +371,7 @@ function ClassesStep({ value, onChange }) {
               <div>
                 <label
                   htmlFor={`class-cat-${item.key}`}
-                  className="mb-2 block text-[13px] font-medium text-gray-600"
+                  className="mb-2 block text-[13px] font-medium text-ink-2"
                 >
                   Category
                 </label>
@@ -379,7 +379,7 @@ function ClassesStep({ value, onChange }) {
                   id={`class-cat-${item.key}`}
                   value={item.category}
                   onChange={setField(item.key, 'category')}
-                  className="h-12 w-full cursor-pointer rounded-xl border border-gray-200 bg-white px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                  className="h-12 w-full cursor-pointer rounded-xl border border-line bg-surface px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                 >
                   {CATEGORIES.map((category) => (
                     <option key={category}>{category}</option>
@@ -394,7 +394,7 @@ function ClassesStep({ value, onChange }) {
       <button
         type="button"
         onClick={() => onChange((current) => [...current, emptyClass()])}
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-brand-300 py-3 text-[15px] font-bold text-brand-600 transition-colors hover:bg-brand-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-brand-300 dark:border-brand-500/40 py-3 text-[15px] font-bold text-brand-600 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/15"
       >
         <Plus className="h-[18px] w-[18px]" strokeWidth={2.5} />
         Add another class
@@ -406,23 +406,23 @@ function ClassesStep({ value, onChange }) {
 function Field({ id, label, hint, ...props }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-2 block text-[13px] font-medium text-gray-600">
+      <label htmlFor={id} className="mb-2 block text-[13px] font-medium text-ink-2">
         {label}
       </label>
       <input
         id={id}
         name={id}
-        className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+        className="h-12 w-full rounded-xl border border-line px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
         {...props}
       />
-      {hint ? <p className="mt-1.5 text-[13px] text-gray-400">{hint}</p> : null}
+      {hint ? <p className="mt-1.5 text-[13px] text-ink-4">{hint}</p> : null}
     </div>
   )
 }
 
 export function FullPageSpinner() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-surface-2">
       <Loader2 className="h-7 w-7 animate-spin text-brand-600" />
     </div>
   )

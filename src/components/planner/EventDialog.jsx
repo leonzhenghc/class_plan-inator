@@ -118,7 +118,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}
               disabled={busy}
               className={
-                confirmingDelete ? 'mr-auto border-red-200 text-red-600 hover:bg-red-50' : 'mr-auto'
+                confirmingDelete ? 'mr-auto border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10' : 'mr-auto'
               }
             >
               {confirmingDelete ? 'Delete for good?' : 'Delete'}
@@ -182,7 +182,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               id="event-kind"
               value={values.kind}
               onChange={set('kind')}
-              className={`${inputClass} cursor-pointer bg-white`}
+              className={`${inputClass} cursor-pointer bg-surface`}
             >
               {EVENT_KINDS.map((kind) => (
                 <option key={kind.value} value={kind.value}>
@@ -197,7 +197,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               id="event-class"
               value={values.classId}
               onChange={set('classId')}
-              className={`${inputClass} cursor-pointer bg-white`}
+              className={`${inputClass} cursor-pointer bg-surface`}
             >
               <option value="">No class</option>
               {classes.map((item) => (
@@ -222,7 +222,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
         {error ? (
           <p
             role="alert"
-            className="rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600"
+            className="rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400"
           >
             {error}
           </p>

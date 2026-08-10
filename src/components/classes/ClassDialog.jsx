@@ -94,7 +94,7 @@ export default function ClassDialog({ open, onClose, editing }) {
               onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}
               disabled={busy}
               className={
-                confirmingDelete ? 'mr-auto border-red-200 text-red-600 hover:bg-red-50' : 'mr-auto'
+                confirmingDelete ? 'mr-auto border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10' : 'mr-auto'
               }
             >
               {confirmingDelete ? 'Delete for good?' : 'Delete'}
@@ -137,7 +137,7 @@ export default function ClassDialog({ open, onClose, editing }) {
               id="class-category"
               value={values.category}
               onChange={set('category')}
-              className={`${inputClass} cursor-pointer bg-white`}
+              className={`${inputClass} cursor-pointer bg-surface`}
             >
               {CATEGORIES.map((category) => (
                 <option key={category}>{category}</option>
@@ -167,13 +167,13 @@ export default function ClassDialog({ open, onClose, editing }) {
         </Field>
 
         {confirmingDelete ? (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600">
+          <p className="rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400">
             Deleting this class also deletes its assignments. Press Delete again to confirm.
           </p>
         ) : null}
 
         {error ? (
-          <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600">
+          <p role="alert" className="rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400">
             {error}
           </p>
         ) : null}

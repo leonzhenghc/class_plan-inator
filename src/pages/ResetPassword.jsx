@@ -67,8 +67,8 @@ export default function ResetPassword() {
     return (
       <AuthShell title="Password updated" subtitle="You're signed in and ready to go.">
         <div className="flex flex-col items-center gap-5 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle2 className="h-6 w-6 text-emerald-600" strokeWidth={2} />
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
           </span>
           <Button size="lg" className="w-full" onClick={() => navigate('/dashboard', { replace: true })}>
             Continue to Clarity
@@ -125,7 +125,7 @@ export default function ResetPassword() {
         {error ? (
           <p
             role="alert"
-            className="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600"
+            className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400"
           >
             <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={2.25} />
             {error}

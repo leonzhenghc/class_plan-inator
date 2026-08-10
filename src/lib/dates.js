@@ -42,11 +42,11 @@ export function formatDueShort(dueAt) {
 
 /** Red when it needs attention now, muted otherwise. */
 export function dueTone(dueAt, status) {
-  if (status === 'done' || !dueAt) return 'text-gray-500'
+  if (status === 'done' || !dueAt) return 'text-ink-3'
   const days = daysFromToday(new Date(dueAt))
   if (days <= 0) return 'text-red-500'
   if (days === 1) return 'text-red-500'
-  return 'text-gray-500'
+  return 'text-ink-3'
 }
 
 /* --------------------------- timeline hour values -------------------------- */

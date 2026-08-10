@@ -22,24 +22,24 @@ export default function Stepper({
   return (
     <div className={cn('min-w-0', className)}>
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <span className="text-[15px] font-semibold text-gray-800">{label}</span>
-        {hint ? <span className="text-[13px] text-gray-400">{hint}</span> : null}
+        <span className="text-[15px] font-semibold text-ink">{label}</span>
+        {hint ? <span className="text-[13px] text-ink-4">{hint}</span> : null}
       </div>
 
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-gray-200 p-1.5">
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-line p-1.5">
         <button
           type="button"
           onClick={() => nudge(-step)}
           disabled={value <= min}
           aria-label={`Decrease ${label}`}
-          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-surface-2 text-ink-2 transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Minus className="h-4 w-4" strokeWidth={2.5} />
         </button>
 
         <span className="flex items-baseline gap-1 tabular-nums">
-          <span className="text-xl font-bold text-gray-900">{value}</span>
-          {unit ? <span className="text-[13px] font-medium text-gray-500">{unit}</span> : null}
+          <span className="text-xl font-bold text-ink">{value}</span>
+          {unit ? <span className="text-[13px] font-medium text-ink-3">{unit}</span> : null}
         </span>
 
         <button
@@ -47,7 +47,7 @@ export default function Stepper({
           onClick={() => nudge(step)}
           disabled={value >= max}
           aria-label={`Increase ${label}`}
-          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-surface-2 text-ink-2 transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Plus className="h-4 w-4" strokeWidth={2.5} />
         </button>
