@@ -4,6 +4,9 @@ import { useAuth } from './AuthContext.jsx'
 
 const WorkspaceContext = createContext(null)
 
+/** Normalises a thrown value so callers always get an Error with `.message`. */
+const asError = (cause) => (cause instanceof Error ? cause : new Error(String(cause)))
+
 /**
  * The signed-in user's classes and assignments, loaded once and shared, so the
  * Dashboard and Class Planner don't each fetch the same rows.
@@ -45,21 +48,30 @@ export function WorkspaceProvider({ children }) {
     setLoading(true)
     // A student's whole workspace is small, so fetch it once and filter by date
     // in memory. That keeps day-to-day navigation instant with no extra round trips.
-    const [classResult, assignmentResult, taskResult, eventResult, sessionResult] =
-      await Promise.all([
-      supabase.from('classes').select('*').order('created_at', { ascending: true }),
-      supabase
-        .from('assignments')
-        .select('*')
-        .order('due_at', { ascending: true, nullsFirst: false }),
-      supabase.from('tasks').select('*').order('created_at', { ascending: true }),
-      supabase.from('events').select('*').order('starts_at', { ascending: true }),
-      supabase
-        .from('pomodoro_sessions')
-        .select('*')
-        .order('completed_at', { ascending: false })
-        .limit(500),
-    ])
+    let classResult, assignmentResult, taskResult, eventResult, sessionResult
+    try {
+      ;[classResult, assignmentResult, taskResult, eventResult, sessionResult] =
+        await Promise.all([
+          supabase.from('classes').select('*').order('created_at', { ascending: true }),
+          supabase
+            .from('assignments')
+            .select('*')
+            .order('due_at', { ascending: true, nullsFirst: false }),
+          supabase.from('tasks').select('*').order('created_at', { ascending: true }),
+          supabase.from('events').select('*').order('starts_at', { ascending: true }),
+          supabase
+            .from('pomodoro_sessions')
+            .select('*')
+            .order('completed_at', { ascending: false })
+            .limit(500),
+        ])
+    } catch (cause) {
+      // A newer run owns the state now — typically the user signed out mid-fetch.
+      if (run !== loadRef.current) return
+      setError(asError(cause))
+      setLoading(false)
+      return
+    }
 
     // A newer run owns the state now — typically the user signed out mid-fetch.
     if (run !== loadRef.current) return
@@ -92,130 +104,174 @@ export function WorkspaceProvider({ children }) {
 
   const createClass = useCallback(
     async (values) => {
-      const { data, error: insertError } = await supabase
-        .from('classes')
-        .insert({ ...values, user_id: user.id })
-        .select()
-        .single()
-      if (!insertError) setClasses((current) => [...current, data])
-      return { data, error: insertError }
+      try {
+        const { data, error: insertError } = await supabase
+          .from('classes')
+          .insert({ ...values, user_id: user.id })
+          .select()
+          .single()
+        if (!insertError) setClasses((current) => [...current, data])
+        return { data, error: insertError }
+      } catch (cause) {
+        return { data: null, error: asError(cause) }
+      }
     },
     [user],
   )
 
   const updateClass = useCallback(async (id, values) => {
-    const { data, error: updateError } = await supabase
-      .from('classes')
-      .update(values)
-      .eq('id', id)
-      .select()
-      .single()
-    if (!updateError) {
-      setClasses((current) => current.map((item) => (item.id === id ? data : item)))
+    try {
+      const { data, error: updateError } = await supabase
+        .from('classes')
+        .update(values)
+        .eq('id', id)
+        .select()
+        .single()
+      if (!updateError) {
+        setClasses((current) => current.map((item) => (item.id === id ? data : item)))
+      }
+      return { data, error: updateError }
+    } catch (cause) {
+      return { data: null, error: asError(cause) }
     }
-    return { data, error: updateError }
   }, [])
 
   const deleteClass = useCallback(async (id) => {
-    const { error: deleteError } = await supabase.from('classes').delete().eq('id', id)
-    if (!deleteError) {
-      setClasses((current) => current.filter((item) => item.id !== id))
-      // The FK cascades in Postgres; mirror that locally instead of refetching.
-      setAssignments((current) => current.filter((item) => item.class_id !== id))
+    try {
+      const { error: deleteError } = await supabase.from('classes').delete().eq('id', id)
+      if (!deleteError) {
+        setClasses((current) => current.filter((item) => item.id !== id))
+        // The FK cascades in Postgres; mirror that locally instead of refetching.
+        setAssignments((current) => current.filter((item) => item.class_id !== id))
+      }
+      return { error: deleteError }
+    } catch (cause) {
+      return { error: asError(cause) }
     }
-    return { error: deleteError }
   }, [])
 
   /* ----------------------------- assignments ------------------------------ */
 
   const createAssignment = useCallback(
     async (values) => {
-      const { data, error: insertError } = await supabase
-        .from('assignments')
-        .insert({ ...values, user_id: user.id })
-        .select()
-        .single()
-      if (!insertError) setAssignments((current) => [...current, data])
-      return { data, error: insertError }
+      try {
+        const { data, error: insertError } = await supabase
+          .from('assignments')
+          .insert({ ...values, user_id: user.id })
+          .select()
+          .single()
+        if (!insertError) setAssignments((current) => [...current, data])
+        return { data, error: insertError }
+      } catch (cause) {
+        return { data: null, error: asError(cause) }
+      }
     },
     [user],
   )
 
   const updateAssignment = useCallback(async (id, values) => {
-    const { data, error: updateError } = await supabase
-      .from('assignments')
-      .update(values)
-      .eq('id', id)
-      .select()
-      .single()
-    if (!updateError) {
-      setAssignments((current) => current.map((item) => (item.id === id ? data : item)))
+    try {
+      const { data, error: updateError } = await supabase
+        .from('assignments')
+        .update(values)
+        .eq('id', id)
+        .select()
+        .single()
+      if (!updateError) {
+        setAssignments((current) => current.map((item) => (item.id === id ? data : item)))
+      }
+      return { data, error: updateError }
+    } catch (cause) {
+      return { data: null, error: asError(cause) }
     }
-    return { data, error: updateError }
   }, [])
 
   const deleteAssignment = useCallback(async (id) => {
-    const { error: deleteError } = await supabase.from('assignments').delete().eq('id', id)
-    if (!deleteError) setAssignments((current) => current.filter((item) => item.id !== id))
-    return { error: deleteError }
+    try {
+      const { error: deleteError } = await supabase.from('assignments').delete().eq('id', id)
+      if (!deleteError) setAssignments((current) => current.filter((item) => item.id !== id))
+      return { error: deleteError }
+    } catch (cause) {
+      return { error: asError(cause) }
+    }
   }, [])
 
   /* -------------------------------- tasks --------------------------------- */
 
   const createTask = useCallback(
     async (values) => {
-      const { data, error: insertError } = await supabase
-        .from('tasks')
-        .insert({ ...values, user_id: user.id })
-        .select()
-        .single()
-      if (!insertError) setTasks((current) => [...current, data])
-      return { data, error: insertError }
+      try {
+        const { data, error: insertError } = await supabase
+          .from('tasks')
+          .insert({ ...values, user_id: user.id })
+          .select()
+          .single()
+        if (!insertError) setTasks((current) => [...current, data])
+        return { data, error: insertError }
+      } catch (cause) {
+        return { data: null, error: asError(cause) }
+      }
     },
     [user],
   )
 
   const updateTask = useCallback(async (id, values) => {
-    const { data, error: updateError } = await supabase
-      .from('tasks')
-      .update(values)
-      .eq('id', id)
-      .select()
-      .single()
-    if (!updateError) setTasks((current) => current.map((item) => (item.id === id ? data : item)))
-    return { data, error: updateError }
+    try {
+      const { data, error: updateError } = await supabase
+        .from('tasks')
+        .update(values)
+        .eq('id', id)
+        .select()
+        .single()
+      if (!updateError) setTasks((current) => current.map((item) => (item.id === id ? data : item)))
+      return { data, error: updateError }
+    } catch (cause) {
+      return { data: null, error: asError(cause) }
+    }
   }, [])
 
   const deleteTask = useCallback(async (id) => {
-    const { error: deleteError } = await supabase.from('tasks').delete().eq('id', id)
-    if (!deleteError) setTasks((current) => current.filter((item) => item.id !== id))
-    return { error: deleteError }
+    try {
+      const { error: deleteError } = await supabase.from('tasks').delete().eq('id', id)
+      if (!deleteError) setTasks((current) => current.filter((item) => item.id !== id))
+      return { error: deleteError }
+    } catch (cause) {
+      return { error: asError(cause) }
+    }
   }, [])
 
   /* -------------------------------- events -------------------------------- */
 
   const createEvent = useCallback(
     async (values) => {
-      const { data, error: insertError } = await supabase
-        .from('events')
-        .insert({ ...values, user_id: user.id })
-        .select()
-        .single()
-      if (!insertError) setEvents((current) => [...current, data])
-      return { data, error: insertError }
+      try {
+        const { data, error: insertError } = await supabase
+          .from('events')
+          .insert({ ...values, user_id: user.id })
+          .select()
+          .single()
+        if (!insertError) setEvents((current) => [...current, data])
+        return { data, error: insertError }
+      } catch (cause) {
+        return { data: null, error: asError(cause) }
+      }
     },
     [user],
   )
 
   const updateEvent = useCallback(async (id, values) => {
-    const { data, error: updateError } = await supabase
-      .from('events')
-      .update(values)
-      .eq('id', id)
-      .select()
-      .single()
-    if (!updateError) setEvents((current) => current.map((item) => (item.id === id ? data : item)))
-    return { data, error: updateError }
+    try {
+      const { data, error: updateError } = await supabase
+        .from('events')
+        .update(values)
+        .eq('id', id)
+        .select()
+        .single()
+      if (!updateError) setEvents((current) => current.map((item) => (item.id === id ? data : item)))
+      return { data, error: updateError }
+    } catch (cause) {
+      return { data: null, error: asError(cause) }
+    }
   }, [])
 
   /** Hides one date of a series — used by "delete this occurrence". */
@@ -255,9 +311,13 @@ export function WorkspaceProvider({ children }) {
   )
 
   const deleteEvent = useCallback(async (id) => {
-    const { error: deleteError } = await supabase.from('events').delete().eq('id', id)
-    if (!deleteError) setEvents((current) => current.filter((item) => item.id !== id))
-    return { error: deleteError }
+    try {
+      const { error: deleteError } = await supabase.from('events').delete().eq('id', id)
+      if (!deleteError) setEvents((current) => current.filter((item) => item.id !== id))
+      return { error: deleteError }
+    } catch (cause) {
+      return { error: asError(cause) }
+    }
   }, [])
 
   /* --------------------------- pomodoro sessions --------------------------- */
@@ -266,13 +326,17 @@ export function WorkspaceProvider({ children }) {
   const logSession = useCallback(
     async (values) => {
       if (!user) return { error: new Error('Not signed in') }
-      const { data, error: insertError } = await supabase
-        .from('pomodoro_sessions')
-        .insert({ ...values, user_id: user.id })
-        .select()
-        .single()
-      if (!insertError) setSessions((current) => [data, ...current])
-      return { data, error: insertError }
+      try {
+        const { data, error: insertError } = await supabase
+          .from('pomodoro_sessions')
+          .insert({ ...values, user_id: user.id })
+          .select()
+          .single()
+        if (!insertError) setSessions((current) => [data, ...current])
+        return { data, error: insertError }
+      } catch (cause) {
+        return { data: null, error: asError(cause) }
+      }
     },
     [user],
   )

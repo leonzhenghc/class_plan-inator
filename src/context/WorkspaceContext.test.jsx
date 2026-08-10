@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 const { queryState } = vi.hoisted(() => ({
@@ -63,12 +63,24 @@ vi.mock('./AuthContext.jsx', async (importOriginal) => {
 import { WorkspaceProvider, useWorkspace } from './WorkspaceContext.jsx'
 
 function Probe() {
-  const { loading, error, classes } = useWorkspace()
+  const { loading, error, classes, events, createEvent } = useWorkspace()
+  const [result, setResult] = useState('')
   return (
     <div>
       <span data-testid="loading">{String(loading)}</span>
       <span data-testid="classes">{classes.length}</span>
+      <span data-testid="events">{events.length}</span>
       <span data-testid="error">{error?.message ?? 'none'}</span>
+      <button
+        type="button"
+        onClick={async () => {
+          const { error: saveError } = await createEvent({ title: 'x' })
+          setResult(saveError ? `error: ${saveError.message}` : 'ok')
+        }}
+      >
+        create event
+      </button>
+      <span data-testid="create-result">{result}</span>
     </div>
   )
 }
@@ -170,5 +182,43 @@ describe('WorkspaceProvider fetch lifecycle', () => {
     })
 
     await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('sessions query blew up'))
+  })
+
+  it('returns a usable error when a mutation rejects, without touching state', async () => {
+    queryState.user = { id: 'u1' }
+    render(
+      <Harness>
+        <Probe />
+      </Harness>,
+    )
+
+    for (const table of ['classes', 'assignments', 'tasks', 'events', 'pomodoro_sessions']) {
+      deferred(table).resolve({ data: [], error: null })
+    }
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'))
+
+    // The next supabase call gets a fresh deferred so it can be rejected.
+    queryState.generations.push(queryState.makeDeferreds())
+    fireEvent.click(screen.getByText('create event'))
+    deferred('events').reject(new Error('network down'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('create-result')).toHaveTextContent('error: network down'),
+    )
+    expect(screen.getByTestId('events')).toHaveTextContent('0')
+  })
+
+  it('surfaces a rejected workspace fetch instead of hanging on loading', async () => {
+    queryState.user = { id: 'u1' }
+    render(
+      <Harness>
+        <Probe />
+      </Harness>,
+    )
+
+    deferred('events').reject(new Error('network down'))
+
+    await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('network down'))
+    expect(screen.getByTestId('loading')).toHaveTextContent('false')
   })
 })
