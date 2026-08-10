@@ -18,6 +18,10 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
   const { classes, events, createEvent, updateEvent, deleteEvent, excludeOccurrence, overrideOccurrence } =
     useWorkspace()
 
+  /** Fixed blocks come from a class schedule: read-only, nothing can change them. */
+  const locked = Boolean(editing?.fixed)
+  const lockedClassName = classes.find((item) => item.id === editing?.class_id)?.name
+
   /** The stored row behind whatever is being edited — a series, or a plain event. */
   const series = editing?.seriesId
     ? events.find((item) => item.id === editing.seriesId)
@@ -68,6 +72,11 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
 
   const submit = async (event) => {
     event.preventDefault()
+
+    if (locked) {
+      onClose()
+      return
+    }
 
     if (!values.dateKey) {
       setError('Pick a day for this block.')
@@ -165,9 +174,20 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
     <Dialog
       open={open}
       onClose={onClose}
-      title={editing ? 'Edit block' : 'Add to your day'}
-      description={editing ? undefined : 'Blocks show up on the timeline for this day.'}
+      title={locked ? 'Class schedule' : editing ? 'Edit block' : 'Add to your day'}
+      description={
+        locked
+          ? `Scheduled from ${lockedClassName ?? 'your class'} — it stays fixed on the calendar.`
+          : editing
+            ? undefined
+            : 'Blocks show up on the timeline for this day.'
+      }
       footer={
+        locked ? (
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        ) : (
         <>
           {editing ? (
             <Button
@@ -190,6 +210,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             {busy ? 'Saving…' : editing ? 'Save changes' : 'Add block'}
           </Button>
         </>
+        )
       }
     >
       <form id="event-form" onSubmit={submit} className="space-y-5 pb-3">
@@ -199,7 +220,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             value={values.title}
             onChange={set('title')}
             placeholder="Intro to Psychology"
-            className={inputClass}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+            disabled={locked}
             autoFocus
           />
         </Field>
@@ -210,21 +232,22 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             value={values.subtitle}
             onChange={set('subtitle')}
             placeholder="Room 402 — Lecture on Neuroplasticity"
-            className={inputClass}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+            disabled={locked}
           />
         </Field>
 
         <Field
           id="event-date"
           label="Day"
-          hint={editing ? 'Use drag to move a block to another day' : undefined}
+          hint={locked ? undefined : editing ? 'Use drag to move a block to another day' : undefined}
         >
           <input
             id="event-date"
             type="date"
             value={values.dateKey}
             onChange={set('dateKey')}
-            disabled={Boolean(editing)}
+            disabled={Boolean(editing) || locked}
             className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
           />
         </Field>
@@ -236,7 +259,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               type="time"
               value={values.start}
               onChange={set('start')}
-              className={inputClass}
+              disabled={locked}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
             />
           </Field>
           <Field id="event-end" label="Ends">
@@ -245,7 +269,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               type="time"
               value={values.end}
               onChange={set('end')}
-              className={inputClass}
+              disabled={locked}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
             />
           </Field>
         </div>
@@ -256,7 +281,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               id="event-kind"
               value={values.kind}
               onChange={set('kind')}
-              className={`${inputClass} cursor-pointer bg-surface`}
+              disabled={locked}
+              className={`${inputClass} cursor-pointer bg-surface disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {EVENT_KINDS.map((kind) => (
                 <option key={kind.value} value={kind.value}>
@@ -271,7 +297,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               id="event-class"
               value={values.classId}
               onChange={set('classId')}
-              className={`${inputClass} cursor-pointer bg-surface`}
+              disabled={locked}
+              className={`${inputClass} cursor-pointer bg-surface disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <option value="">No class</option>
               {classes.map((item) => (
@@ -290,7 +317,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               id="event-repeat"
               value={values.repeatFreq}
               onChange={set('repeatFreq')}
-              disabled={editing?.isOccurrence && scope === 'one'}
+              disabled={locked || (editing?.isOccurrence && scope === 'one')}
               className={`${inputClass} cursor-pointer bg-surface disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <option value="">Does not repeat</option>
@@ -311,7 +338,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
                       type="button"
                       aria-label={day.full}
                       aria-pressed={active}
-                      disabled={editing?.isOccurrence && scope === 'one'}
+                      disabled={locked || (editing?.isOccurrence && scope === 'one')}
                       onClick={() =>
                         setValues((current) => ({
                           ...current,
@@ -347,7 +374,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
                 type="date"
                 value={values.repeatUntil}
                 onChange={set('repeatUntil')}
-                disabled={editing?.isOccurrence && scope === 'one'}
+                disabled={locked || (editing?.isOccurrence && scope === 'one')}
                 className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
               />
             </Field>
@@ -391,7 +418,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             value={values.tag}
             onChange={set('tag')}
             placeholder="High focus"
-            className={inputClass}
+            disabled={locked}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
           />
         </Field>
 

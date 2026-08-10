@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Lock } from 'lucide-react'
 import { cn } from '../ui/cn.js'
 import {
   currentHourValue,
@@ -111,6 +112,8 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
   }, [drag, onCommit])
 
   const beginDrag = (mode) => (event, item) => {
+    // Fixed blocks come from the class schedule — they are never movable.
+    if (item.fixed) return
     event.preventDefault()
     event.stopPropagation()
     const startsAt = Number(item.starts_at)
@@ -219,7 +222,8 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
                         if (event.key === 'Enter' || event.key === ' ') onOpen?.(item)
                       }}
                       className={cn(
-                        'absolute right-1 left-1 cursor-grab overflow-hidden rounded-md border-l-[3px] px-2 py-1 text-left select-none',
+                        'absolute right-1 left-1 overflow-hidden rounded-md border-l-[3px] px-2 py-1 text-left select-none',
+                        item.fixed ? 'cursor-default' : 'cursor-grab',
                         KIND_STYLES[item.kind] ?? KIND_STYLES.study,
                         dragging && 'z-30 cursor-grabbing opacity-90 shadow-lg',
                       )}
@@ -232,10 +236,18 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
                         </p>
                       ) : null}
 
-                      <span
-                        onPointerDown={(event) => beginDrag('resize')(event, item)}
-                        className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize"
-                      />
+                      {item.fixed ? (
+                        <Lock
+                          aria-label="Fixed by its class schedule"
+                          className="absolute top-1 right-1 h-3 w-3 opacity-45"
+                          strokeWidth={2.5}
+                        />
+                      ) : (
+                        <span
+                          onPointerDown={(event) => beginDrag('resize')(event, item)}
+                          className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize"
+                        />
+                      )}
                     </div>
                   )
                 })}

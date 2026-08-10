@@ -20,6 +20,7 @@ import ClassDialog from '../components/classes/ClassDialog.jsx'
 import AssignmentDialog from '../components/classes/AssignmentDialog.jsx'
 import { useWorkspace } from '../context/WorkspaceContext.jsx'
 import { dueTone, formatDueShort } from '../lib/dates.js'
+import { describeSchedule, SEMESTERS, SEMESTER_LABELS } from '../lib/classSchedule.js'
 
 const CATEGORY_TONES = {
   STEM: 'stem',
@@ -29,24 +30,21 @@ const CATEGORY_TONES = {
   Other: 'todo',
 }
 
-const ALL_TERMS = '__all__'
+const ALL_SEMESTERS = '__all__'
 
 export default function ClassPlanner() {
   const { loading, classes, statsByClass } = useWorkspace()
   const [view, setView] = useState('grid')
-  const [term, setTerm] = useState(ALL_TERMS)
+  const [semester, setSemester] = useState(ALL_SEMESTERS)
   const [sortBy, setSortBy] = useState('due')
   const [classDialog, setClassDialog] = useState({ open: false, editing: null })
   const [assignmentDialog, setAssignmentDialog] = useState({ open: false, classId: null })
 
-  const terms = useMemo(
-    () => [...new Set(classes.map((item) => item.term).filter(Boolean))].sort(),
-    [classes],
-  )
-
   const visible = useMemo(() => {
     const filtered =
-      term === ALL_TERMS ? classes : classes.filter((item) => (item.term || '') === term)
+      semester === ALL_SEMESTERS
+        ? classes
+        : classes.filter((item) => item.semester === semester)
 
     // Classes with nothing outstanding sink to the bottom rather than jumping to the top.
     return [...filtered].sort((a, b) => {
@@ -58,7 +56,7 @@ export default function ClassPlanner() {
       if (!nextB) return -1
       return new Date(nextA) - new Date(nextB)
     })
-  }, [classes, term, sortBy, statsByClass])
+  }, [classes, semester, sortBy, statsByClass])
 
   return (
     <>
@@ -89,15 +87,15 @@ export default function ClassPlanner() {
 
           <div className="relative">
             <select
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              aria-label="Filter by term"
+              value={semester}
+              onChange={(event) => setSemester(event.target.value)}
+              aria-label="Filter by semester"
               className="h-11 cursor-pointer appearance-none rounded-xl border border-line pr-10 pl-4 text-[15px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 focus:outline-none"
             >
-              <option value={ALL_TERMS}>All terms</option>
-              {terms.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              <option value={ALL_SEMESTERS}>All semesters</option>
+              {SEMESTERS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
                 </option>
               ))}
             </select>
@@ -150,6 +148,7 @@ export default function ClassPlanner() {
           >
             {visible.map((course) => {
               const stats = statsByClass[course.id] ?? { total: 0, done: 0, next: null }
+              const summary = describeSchedule(course)
               return (
                 <Card key={course.id} className="group flex flex-col px-6 py-6">
                   <div className="flex items-start justify-between gap-3">
@@ -173,6 +172,16 @@ export default function ClassPlanner() {
                     <GraduationCap className="h-[18px] w-[18px]" strokeWidth={2} />
                     {course.professor || 'No professor set'}
                   </p>
+
+                  {course.semester || summary ? (
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[13px] text-ink-4">
+                      {course.semester ? (
+                        <span>{SEMESTER_LABELS[course.semester] ?? course.semester} semester</span>
+                      ) : null}
+                      {course.semester && summary ? <span className="opacity-50">·</span> : null}
+                      {summary ? <span>{summary}</span> : null}
+                    </p>
+                  ) : null}
 
                   <div className="mt-5 rounded-xl bg-surface-2 px-4 py-3.5">
                     <p className="text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase">

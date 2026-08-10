@@ -102,16 +102,67 @@ export function WorkspaceProvider({ children }) {
 
   /* ------------------------------- classes -------------------------------- */
 
+  /**
+   * Deletes the fixed blocks standing in for a class schedule and, when a new
+   * schedule is given, inserts its replacement row. The class row itself is
+   * untouched; `updateClass` calls this after saving the new details so an
+   * edited schedule takes effect, and `deleteClass` reuses it to clear the
+   * blocks before removing the class.
+   */
+  const swapClassSchedule = useCallback(
+    async (classId, schedule) => {
+      const fixedEvents = eventsRef.current.filter(
+        (item) => item.class_id === classId && item.fixed,
+      )
+      if (fixedEvents.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', fixedEvents.map((item) => item.id))
+        if (deleteError) return deleteError
+        setEvents((current) =>
+          current.filter((item) => !fixedEvents.some((fixed) => fixed.id === item.id)),
+        )
+      }
+
+      if (schedule) {
+        const { data, error: insertError } = await supabase
+          .from('events')
+          .insert({ ...schedule, class_id: classId, user_id: user.id })
+          .select()
+          .single()
+        if (insertError) return insertError
+        setEvents((current) => [...current, data])
+      }
+      return null
+    },
+    [user],
+  )
+
   const createClass = useCallback(
-    async (values) => {
+    async (values, schedule = null) => {
       try {
         const { data, error: insertError } = await supabase
           .from('classes')
           .insert({ ...values, user_id: user.id })
           .select()
           .single()
-        if (!insertError) setClasses((current) => [...current, data])
-        return { data, error: insertError }
+        if (insertError) return { data, error: insertError }
+        setClasses((current) => [...current, data])
+
+        if (schedule) {
+          // The schedule is built before the class exists, so its class_id is
+          // filled in here. A failure leaves the class saved — the dialog
+          // reports it and editing the class can retry.
+          const { data: scheduleData, error: scheduleError } = await supabase
+            .from('events')
+            .insert({ ...schedule, class_id: data.id, user_id: user.id })
+            .select()
+            .single()
+          if (scheduleError) return { data, error: scheduleError }
+          setEvents((current) => [...current, scheduleData])
+        }
+        return { data, error: null }
       } catch (cause) {
         return { data: null, error: asError(cause) }
       }
@@ -119,36 +170,51 @@ export function WorkspaceProvider({ children }) {
     [user],
   )
 
-  const updateClass = useCallback(async (id, values) => {
-    try {
-      const { data, error: updateError } = await supabase
-        .from('classes')
-        .update(values)
-        .eq('id', id)
-        .select()
-        .single()
-      if (!updateError) {
+  const updateClass = useCallback(
+    async (id, values, schedule) => {
+      try {
+        const { data, error: updateError } = await supabase
+          .from('classes')
+          .update(values)
+          .eq('id', id)
+          .select()
+          .single()
+        if (updateError) return { data, error: updateError }
         setClasses((current) => current.map((item) => (item.id === id ? data : item)))
-      }
-      return { data, error: updateError }
-    } catch (cause) {
-      return { data: null, error: asError(cause) }
-    }
-  }, [])
 
-  const deleteClass = useCallback(async (id) => {
-    try {
-      const { error: deleteError } = await supabase.from('classes').delete().eq('id', id)
-      if (!deleteError) {
-        setClasses((current) => current.filter((item) => item.id !== id))
-        // The FK cascades in Postgres; mirror that locally instead of refetching.
-        setAssignments((current) => current.filter((item) => item.class_id !== id))
+        // Swap the fixed blocks after every save: an edited, cleared, or newly
+        // added schedule always ends up matching what the form shows.
+        const swapError = await swapClassSchedule(id, schedule)
+        if (swapError) return { data, error: swapError }
+        return { data, error: null }
+      } catch (cause) {
+        return { data: null, error: asError(cause) }
       }
-      return { error: deleteError }
-    } catch (cause) {
-      return { error: asError(cause) }
-    }
-  }, [])
+    },
+    [swapClassSchedule],
+  )
+
+  const deleteClass = useCallback(
+    async (id) => {
+      try {
+        // The events FK is SET NULL, so without this the fixed blocks would
+        // linger on the calendar as orphaned, immutable rows.
+        const swapError = await swapClassSchedule(id, null)
+        if (swapError) return { error: swapError }
+
+        const { error: deleteError } = await supabase.from('classes').delete().eq('id', id)
+        if (!deleteError) {
+          setClasses((current) => current.filter((item) => item.id !== id))
+          // The FK cascades in Postgres; mirror that locally instead of refetching.
+          setAssignments((current) => current.filter((item) => item.class_id !== id))
+        }
+        return { error: deleteError }
+      } catch (cause) {
+        return { error: asError(cause) }
+      }
+    },
+    [swapClassSchedule],
+  )
 
   /* ----------------------------- assignments ------------------------------ */
 
