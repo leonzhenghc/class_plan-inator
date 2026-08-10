@@ -22,6 +22,12 @@ export function WorkspaceProvider({ children }) {
   const [error, setError] = useState(null)
   /** Monotonic run id; a stale in-flight fetch is discarded once a newer run starts. */
   const loadRef = useRef(0)
+  /**
+   * Mirror of `events` for the series helpers. They need the current rows but
+   * must not be recreated every time an event changes, or the drag handlers
+   * they feed would be rebuilt mid-gesture.
+   */
+  const eventsRef = useRef([])
 
   const load = useCallback(async () => {
     const run = ++loadRef.current
@@ -77,6 +83,10 @@ export function WorkspaceProvider({ children }) {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    eventsRef.current = events
+  }, [events])
 
   /* ------------------------------- classes -------------------------------- */
 
@@ -208,6 +218,42 @@ export function WorkspaceProvider({ children }) {
     return { data, error: updateError }
   }, [])
 
+  /** Hides one date of a series — used by "delete this occurrence". */
+  const excludeOccurrence = useCallback(async (seriesId, dateKey) => {
+    const series = eventsRef.current.find((item) => item.id === seriesId)
+    if (!series) return { error: new Error('Series not found') }
+    const excluded = [...new Set([...(series.excluded_dates ?? []), dateKey])]
+    return updateEvent(seriesId, { excluded_dates: excluded })
+  }, [updateEvent])
+
+  /**
+   * Detaches one date from a series: the series skips it, and a normal row
+   * takes its place. That row is an ordinary event from then on, so editing or
+   * dragging it later never touches the rest of the series.
+   */
+  const overrideOccurrence = useCallback(
+    async (seriesId, dateKey, values) => {
+      const series = eventsRef.current.find((item) => item.id === seriesId)
+      if (!series) return { error: new Error('Series not found') }
+
+      const { error: excludeError } = await excludeOccurrence(seriesId, dateKey)
+      if (excludeError) return { error: excludeError }
+
+      const { id, created_at, updated_at, ...base } = series
+      return createEvent({
+        ...base,
+        repeat_freq: null,
+        repeat_days: [],
+        repeat_until: null,
+        excluded_dates: [],
+        recurrence_id: seriesId,
+        event_date: dateKey,
+        ...values,
+      })
+    },
+    [excludeOccurrence, createEvent],
+  )
+
   const deleteEvent = useCallback(async (id) => {
     const { error: deleteError } = await supabase.from('events').delete().eq('id', id)
     if (!deleteError) setEvents((current) => current.filter((item) => item.id !== id))
@@ -295,6 +341,8 @@ export function WorkspaceProvider({ children }) {
       createEvent,
       updateEvent,
       deleteEvent,
+      excludeOccurrence,
+      overrideOccurrence,
       logSession,
     }),
     [
@@ -320,6 +368,8 @@ export function WorkspaceProvider({ children }) {
       createEvent,
       updateEvent,
       deleteEvent,
+      excludeOccurrence,
+      overrideOccurrence,
       logSession,
     ],
   )

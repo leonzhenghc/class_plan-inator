@@ -18,6 +18,7 @@ import {
   startOfWeek,
   toDateKey,
 } from '../lib/dates.js'
+import { expandEvents } from '../lib/recurrence.js'
 
 const VIEWS = [
   { value: 'month', label: 'Month' },
@@ -34,7 +35,8 @@ const parseDate = (value) => {
 }
 
 export default function CalendarPage() {
-  const { loading, events, assignments, classesById, updateEvent } = useWorkspace()
+  const { loading, events, assignments, classesById, updateEvent, overrideOccurrence } =
+    useWorkspace()
   // View and date live in the URL so back works, refresh keeps your place, and
   // a link to a particular week is shareable.
   const [params, setParams] = useSearchParams()
@@ -81,6 +83,17 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, toDateKey(anchor)])
 
+  /** Repeating rows become concrete occurrences for whatever span is on screen. */
+  const visible = useMemo(() => {
+    if (view === 'month') {
+      const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1)
+      const from = addDays(first, -first.getDay())
+      return expandEvents(events, from, addDays(from, 41))
+    }
+    return expandEvents(events, days[0], days[days.length - 1])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, view, toDateKey(anchor), days])
+
   const heading =
     view === 'month'
       ? anchor.toLocaleDateString([], { month: 'long', year: 'numeric' })
@@ -101,10 +114,17 @@ export default function CalendarPage() {
 
   const openDay = (date) => patchParams({ view: 'day', date: toDateKey(date) })
 
-  /** Drag and resize both land here, same path the dialog uses. */
+  /**
+   * Drag and resize land here. Moving one occurrence of a series detaches just
+   * that date rather than shifting every future week — the least destructive
+   * reading of dragging a single block.
+   */
   const commitTimes = useCallback(
-    (item, times) => updateEvent(item.id, times),
-    [updateEvent],
+    (item, times) =>
+      item.isOccurrence
+        ? overrideOccurrence(item.seriesId, item.event_date, times)
+        : updateEvent(item.id, times),
+    [updateEvent, overrideOccurrence],
   )
 
   return (
@@ -165,7 +185,7 @@ export default function CalendarPage() {
         ) : view === 'month' ? (
           <MonthGrid
             month={anchor}
-            events={events}
+            events={visible}
             assignments={assignments}
             classesById={classesById}
             selected={selected}
@@ -181,7 +201,7 @@ export default function CalendarPage() {
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-line bg-surface">
               <TimeGrid
                 days={days}
-                events={events}
+                events={visible}
                 onCommit={commitTimes}
                 onCreate={openCreate}
                 onOpen={(item) =>
