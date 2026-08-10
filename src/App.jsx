@@ -14,7 +14,6 @@ import ConfirmEmail from './pages/ConfirmEmail.jsx'
 import Onboarding from './pages/Onboarding.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import ClassPlanner from './pages/ClassPlanner.jsx'
-import DailyPlanner from './pages/DailyPlanner.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
 import Pomodoro from './pages/Pomodoro.jsx'
 import Settings from './pages/Settings.jsx'
@@ -47,7 +46,8 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/classes" element={<ClassPlanner />} />
-                <Route path="/planner" element={<DailyPlanner />} />
+                {/* The calendar owns the day view now; keep old links working. */}
+              <Route path="/planner" element={<Navigate to="/calendar?view=day" replace />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

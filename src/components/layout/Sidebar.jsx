@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Calendar,
   CalendarDays,
-  ClipboardList,
   Copy,
   LayoutGrid,
   PlayCircle,
@@ -16,7 +15,6 @@ import { useStudySession } from '../../context/StudySessionContext.jsx'
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { to: '/classes', label: 'Class Planner', icon: CalendarDays },
-  { to: '/planner', label: 'Daily Planner', icon: ClipboardList },
   { to: '/calendar', label: 'Calendar', icon: Calendar },
   { to: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
