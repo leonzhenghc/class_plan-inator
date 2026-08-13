@@ -56,6 +56,24 @@ effectively unusable until you configure your own SMTP provider under Authentica
 **Google sign-in.** Enable the Google provider under Authentication → Providers and supply a Google
 OAuth client ID/secret. Until then the button returns a clear "not enabled" message.
 
+## Deploying to GitHub Pages
+
+Merging to `main` runs `.github/workflows/deploy.yml`, which builds the app and publishes it to
+GitHub Pages. One-time setup:
+
+1. **Enable Pages.** Repo Settings → Pages → Source: **GitHub Actions**.
+2. **Provide the Supabase keys** (they are public by design, but kept out of git):
+   - Settings → Secrets and variables → Actions → **Variables**: add `VITE_SUPABASE_URL`.
+   - Same page → **Secrets**: add `VITE_SUPABASE_ANON_KEY`.
+3. **Allow the redirect.** The app's auth emails point at your domain. Under your Supabase project's
+   Authentication → URL Configuration, add your Pages URL to the redirect allowlist, e.g.
+   `https://leonzhenghc.github.io/class_plan-inator/**` (or your custom domain).
+
+Deploy manually anytime from the Actions tab → "Deploy to GitHub Pages" → Run workflow.
+
+The Pages URL lives under a sub-path (`/class_plan-inator/`), so `public/404.html` bounces deep
+links back to the router. If you rename the repo, update that file's `/class_plan-inator/` path.
+
 ## Structure
 
 ```

@@ -42,11 +42,11 @@ export function formatDueShort(dueAt) {
 
 /** Red when it needs attention now, muted otherwise. */
 export function dueTone(dueAt, status) {
-  if (status === 'done' || !dueAt) return 'text-gray-500'
+  if (status === 'done' || !dueAt) return 'text-ink-3'
   const days = daysFromToday(new Date(dueAt))
   if (days <= 0) return 'text-red-500'
   if (days === 1) return 'text-red-500'
-  return 'text-gray-500'
+  return 'text-ink-3'
 }
 
 /* --------------------------- timeline hour values -------------------------- */
@@ -118,4 +118,43 @@ export function fromDateTimeInputs(date, time) {
   const [hours, minutes] = (time || '23:59').split(':').map(Number)
   const [year, month, day] = date.split('-').map(Number)
   return new Date(year, month - 1, day, hours, minutes).toISOString()
+}
+
+/* ------------------------------ week helpers ------------------------------ */
+
+/** Sunday-start week containing `date`, normalised to midnight. */
+export function startOfWeek(date) {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - d.getDay())
+  return d
+}
+
+export function addDays(date, count) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + count)
+  return d
+}
+
+export function addMonths(date, count) {
+  return new Date(date.getFullYear(), date.getMonth() + count, 1)
+}
+
+export function isSameDay(a, b) {
+  return toDateKey(a) === toDateKey(b)
+}
+
+/** Decimal hours since midnight, for placing the "now" line. */
+export function currentHourValue() {
+  const now = new Date()
+  return now.getHours() + now.getMinutes() / 60
+}
+
+/** "Aug 10 – 16" · "Aug 28 – Sep 3" */
+export function formatWeekRange(start) {
+  const end = addDays(start, 6)
+  const sameMonth = start.getMonth() === end.getMonth()
+  const from = start.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  const to = end.toLocaleDateString([], sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })
+  return `${from} – ${to}`
 }

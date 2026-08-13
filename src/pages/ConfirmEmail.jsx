@@ -55,11 +55,11 @@ export default function ConfirmEmail() {
         subtitle="Your account is verified and you're signed in."
       >
         <div className="flex flex-col items-center gap-5 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle2 className="h-6 w-6 text-emerald-600" strokeWidth={2} />
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
           </span>
-          <p className="text-[15px] leading-relaxed text-gray-600">
-            <span className="font-semibold text-gray-900">{user.email}</span> is confirmed.
+          <p className="text-[15px] leading-relaxed text-ink-2">
+            <span className="font-semibold text-ink">{user.email}</span> is confirmed.
           </p>
           <Button size="lg" className="w-full" onClick={() => navigate('/dashboard', { replace: true })}>
             Continue
@@ -81,11 +81,11 @@ export default function ConfirmEmail() {
         }
       >
         <div className="flex flex-col items-center gap-4 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-            <MailCheck className="h-6 w-6 text-emerald-600" strokeWidth={2} />
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20">
+            <MailCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
           </span>
-          <p className="text-[15px] leading-relaxed text-gray-600">
-            Sent to <span className="font-semibold text-gray-900">{email}</span>. Remember to look
+          <p className="text-[15px] leading-relaxed text-ink-2">
+            Sent to <span className="font-semibold text-ink">{email}</span>. Remember to look
             in spam if it doesn&apos;t arrive.
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function ConfirmEmail() {
       }
     >
       <form onSubmit={resend} className="space-y-4">
-        <p className="text-[15px] leading-relaxed text-gray-600">
+        <p className="text-[15px] leading-relaxed text-ink-2">
           Enter your email and we&apos;ll send a new confirmation link.
         </p>
 
@@ -121,7 +121,7 @@ export default function ConfirmEmail() {
         {error ? (
           <p
             role="alert"
-            className="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600"
+            className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400"
           >
             <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={2.25} />
             {error}

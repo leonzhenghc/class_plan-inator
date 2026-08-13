@@ -97,7 +97,7 @@ export default function AssignmentDialog({ open, onClose, editing, defaultClassI
               onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}
               disabled={busy}
               className={
-                confirmingDelete ? 'mr-auto border-red-200 text-red-600 hover:bg-red-50' : 'mr-auto'
+                confirmingDelete ? 'mr-auto border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10' : 'mr-auto'
               }
             >
               {confirmingDelete ? 'Delete for good?' : 'Delete'}
@@ -129,7 +129,7 @@ export default function AssignmentDialog({ open, onClose, editing, defaultClassI
             id="assignment-class"
             value={values.classId}
             onChange={set('classId')}
-            className={`${inputClass} cursor-pointer bg-white`}
+            className={`${inputClass} cursor-pointer bg-surface`}
           >
             <option value="">No class</option>
             {classes.map((item) => (
@@ -167,7 +167,7 @@ export default function AssignmentDialog({ open, onClose, editing, defaultClassI
             id="assignment-status"
             value={values.status}
             onChange={set('status')}
-            className={`${inputClass} cursor-pointer bg-white`}
+            className={`${inputClass} cursor-pointer bg-surface`}
           >
             {STATUSES.map((status) => (
               <option key={status.value} value={status.value}>
@@ -178,7 +178,7 @@ export default function AssignmentDialog({ open, onClose, editing, defaultClassI
         </Field>
 
         {error ? (
-          <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600">
+          <p role="alert" className="rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400">
             {error}
           </p>
         ) : null}

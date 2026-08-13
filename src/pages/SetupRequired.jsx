@@ -24,7 +24,7 @@ const STEPS = [
  */
 export default function SetupRequired() {
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-14">
+    <div className="min-h-screen bg-surface-2 px-6 py-14">
       <div className="mx-auto w-full max-w-[600px]">
         <div className="mb-8 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-sm">
@@ -32,14 +32,14 @@ export default function SetupRequired() {
           </div>
           <div className="leading-tight">
             <p className="text-[22px] font-extrabold tracking-tight text-brand-600">Clarity</p>
-            <p className="text-xs font-medium text-gray-500">Student Workspace</p>
+            <p className="text-xs font-medium text-ink-3">Student Workspace</p>
           </div>
         </div>
 
-        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">
           Connect your backend
         </h1>
-        <p className="mt-2 text-[15px] leading-relaxed text-gray-500">
+        <p className="mt-2 text-[15px] leading-relaxed text-ink-3">
           Clarity stores your classes, tasks and sessions in Supabase. Three steps and you are in.
         </p>
 
@@ -47,22 +47,22 @@ export default function SetupRequired() {
           {STEPS.map(({ icon: Icon, title, body }, index) => (
             <li
               key={title}
-              className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+              className="flex gap-4 rounded-2xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-500/15 text-brand-600">
                 <Icon className="h-5 w-5" strokeWidth={2} />
               </span>
               <div className="min-w-0">
-                <p className="text-[15px] font-bold text-gray-900">
+                <p className="text-[15px] font-bold text-ink">
                   {index + 1}. {title}
                 </p>
-                <p className="mt-1 text-[15px] leading-relaxed text-gray-500">{body}</p>
+                <p className="mt-1 text-[15px] leading-relaxed text-ink-3">{body}</p>
               </div>
             </li>
           ))}
         </ol>
 
-        <p className="mt-6 rounded-xl bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-800">
+        <p className="mt-6 rounded-xl bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-[13px] leading-relaxed text-amber-800 dark:text-amber-200">
           Use the <span className="font-semibold">anon</span> key only. Anything in a{' '}
           <span className="font-mono">VITE_</span> variable ships inside the public JavaScript
           bundle, so the <span className="font-semibold">service_role</span> key must never go in{' '}

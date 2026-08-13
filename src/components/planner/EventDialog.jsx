@@ -4,6 +4,8 @@ import Dialog, { Field, inputClass } from '../ui/Dialog.jsx'
 import Button from '../ui/Button.jsx'
 import { useWorkspace } from '../../context/WorkspaceContext.jsx'
 import { hoursToTimeInput, timeInputToHours } from '../../lib/dates.js'
+import { WEEKDAYS } from '../../lib/recurrence.js'
+import { cn } from '../ui/cn.js'
 
 export const EVENT_KINDS = [
   { value: 'class', label: 'Class' },
@@ -13,8 +15,20 @@ export const EVENT_KINDS = [
 ]
 
 export default function EventDialog({ open, onClose, editing, dateKey, defaultStart }) {
-  const { classes, createEvent, updateEvent, deleteEvent } = useWorkspace()
+  const { classes, events, createEvent, updateEvent, deleteEvent, excludeOccurrence, overrideOccurrence } =
+    useWorkspace()
+
+  /** Fixed blocks come from a class schedule: read-only, nothing can change them. */
+  const locked = Boolean(editing?.fixed)
+  const lockedClassName = classes.find((item) => item.id === editing?.class_id)?.name
+
+  /** The stored row behind whatever is being edited — a series, or a plain event. */
+  const series = editing?.seriesId
+    ? events.find((item) => item.id === editing.seriesId)
+    : editing
+  const repeats = Boolean(series?.repeat_freq)
   const [values, setValues] = useState({
+    dateKey: '',
     title: '',
     subtitle: '',
     kind: 'study',
@@ -22,7 +36,12 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
     end: '10:00',
     tag: '',
     classId: '',
+    repeatFreq: '',
+    repeatDays: [],
+    repeatUntil: '',
   })
+  /** 'one' edits just this date, 'all' edits the series. Only shown when relevant. */
+  const [scope, setScope] = useState('one')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -30,6 +49,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
   useEffect(() => {
     if (!open) return
     setValues({
+      dateKey: dateKey ?? '',
       title: editing?.title ?? '',
       subtitle: editing?.subtitle ?? '',
       kind: editing?.kind ?? 'study',
@@ -37,16 +57,31 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
       end: hoursToTimeInput(editing ? Number(editing.ends_at) : (defaultStart ?? 9) + 1),
       tag: editing?.tag ?? '',
       classId: editing?.class_id ?? '',
+      repeatFreq: series?.repeat_freq ?? '',
+      repeatDays: series?.repeat_days ?? [],
+      repeatUntil: series?.repeat_until ?? '',
     })
+    setScope('one')
     setError(null)
     setConfirmingDelete(false)
-  }, [open, editing, defaultStart])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing, defaultStart, dateKey])
 
   const set = (field) => (event) =>
     setValues((current) => ({ ...current, [field]: event.target.value }))
 
   const submit = async (event) => {
     event.preventDefault()
+
+    if (locked) {
+      onClose()
+      return
+    }
+
+    if (!values.dateKey) {
+      setError('Pick a day for this block.')
+      return
+    }
 
     const starts = timeInputToHours(values.start)
     const ends = timeInputToHours(values.end)
@@ -65,23 +100,53 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
       return
     }
 
-    setBusy(true)
     setError(null)
 
     const payload = {
       title: values.title.trim(),
       subtitle: values.subtitle.trim(),
       kind: values.kind,
-      event_date: dateKey,
+      event_date: values.dateKey,
       starts_at: starts,
       ends_at: ends,
       tag: values.tag.trim(),
       class_id: values.classId || null,
     }
 
-    const { error: saveError } = editing
-      ? await updateEvent(editing.id, payload)
-      : await createEvent(payload)
+    // Editing one date of a series detaches that date instead of touching the rule.
+    if (repeats && editing?.isOccurrence && scope === 'one') {
+      setBusy(true)
+      const { error: overrideError } = await overrideOccurrence(
+        editing.seriesId,
+        editing.event_date,
+        payload,
+      )
+      setBusy(false)
+      if (overrideError) {
+        setError(overrideError.message)
+        return
+      }
+      onClose()
+      return
+    }
+
+    const rule = {
+      repeat_freq: values.repeatFreq || null,
+      repeat_days: values.repeatFreq === 'weekly' ? values.repeatDays : [],
+      repeat_until: values.repeatFreq && values.repeatUntil ? values.repeatUntil : null,
+    }
+
+    // "All events" keeps the series on its own start date; only the rule and
+    // details change, otherwise editing a later occurrence would move the series.
+    const target = repeats ? series : editing
+    setBusy(true)
+    const { error: saveError } = target
+      ? await updateEvent(target.id, {
+          ...payload,
+          event_date: repeats ? series.event_date : payload.event_date,
+          ...rule,
+        })
+      : await createEvent({ ...payload, ...rule })
 
     setBusy(false)
     if (saveError) {
@@ -93,7 +158,10 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
 
   const remove = async () => {
     setBusy(true)
-    const { error: deleteError } = await deleteEvent(editing.id)
+    const { error: deleteError } =
+      repeats && editing?.isOccurrence && scope === 'one'
+        ? await excludeOccurrence(editing.seriesId, editing.event_date)
+        : await deleteEvent(repeats ? series.id : editing.id)
     setBusy(false)
     if (deleteError) {
       setError(deleteError.message)
@@ -106,9 +174,20 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
     <Dialog
       open={open}
       onClose={onClose}
-      title={editing ? 'Edit block' : 'Add to your day'}
-      description={editing ? undefined : 'Blocks show up on the timeline for this day.'}
+      title={locked ? 'Class schedule' : editing ? 'Edit block' : 'Add to your day'}
+      description={
+        locked
+          ? `Scheduled from ${lockedClassName ?? 'your class'} — it stays fixed on the calendar.`
+          : editing
+            ? undefined
+            : 'Blocks show up on the timeline for this day.'
+      }
       footer={
+        locked ? (
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        ) : (
         <>
           {editing ? (
             <Button
@@ -118,7 +197,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}
               disabled={busy}
               className={
-                confirmingDelete ? 'mr-auto border-red-200 text-red-600 hover:bg-red-50' : 'mr-auto'
+                confirmingDelete ? 'mr-auto border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10' : 'mr-auto'
               }
             >
               {confirmingDelete ? 'Delete for good?' : 'Delete'}
@@ -131,6 +210,7 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             {busy ? 'Saving…' : editing ? 'Save changes' : 'Add block'}
           </Button>
         </>
+        )
       }
     >
       <form id="event-form" onSubmit={submit} className="space-y-5 pb-3">
@@ -140,7 +220,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             value={values.title}
             onChange={set('title')}
             placeholder="Intro to Psychology"
-            className={inputClass}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+            disabled={locked}
             autoFocus
           />
         </Field>
@@ -151,7 +232,23 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
             value={values.subtitle}
             onChange={set('subtitle')}
             placeholder="Room 402 — Lecture on Neuroplasticity"
-            className={inputClass}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+            disabled={locked}
+          />
+        </Field>
+
+        <Field
+          id="event-date"
+          label="Day"
+          hint={locked ? undefined : editing ? 'Use drag to move a block to another day' : undefined}
+        >
+          <input
+            id="event-date"
+            type="date"
+            value={values.dateKey}
+            onChange={set('dateKey')}
+            disabled={Boolean(editing) || locked}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
           />
         </Field>
 
@@ -162,7 +259,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               type="time"
               value={values.start}
               onChange={set('start')}
-              className={inputClass}
+              disabled={locked}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
             />
           </Field>
           <Field id="event-end" label="Ends">
@@ -171,7 +269,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               type="time"
               value={values.end}
               onChange={set('end')}
-              className={inputClass}
+              disabled={locked}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
             />
           </Field>
         </div>
@@ -182,7 +281,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               id="event-kind"
               value={values.kind}
               onChange={set('kind')}
-              className={`${inputClass} cursor-pointer bg-white`}
+              disabled={locked}
+              className={`${inputClass} cursor-pointer bg-surface disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {EVENT_KINDS.map((kind) => (
                 <option key={kind.value} value={kind.value}>
@@ -197,7 +297,8 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
               id="event-class"
               value={values.classId}
               onChange={set('classId')}
-              className={`${inputClass} cursor-pointer bg-white`}
+              disabled={locked}
+              className={`${inputClass} cursor-pointer bg-surface disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <option value="">No class</option>
               {classes.map((item) => (
@@ -209,20 +310,123 @@ export default function EventDialog({ open, onClose, editing, dateKey, defaultSt
           </Field>
         </div>
 
+        {/* -------------------------------- Repeat -------------------------------- */}
+        <div className="rounded-xl border border-line p-4">
+          <Field id="event-repeat" label="Repeat">
+            <select
+              id="event-repeat"
+              value={values.repeatFreq}
+              onChange={set('repeatFreq')}
+              disabled={locked || (editing?.isOccurrence && scope === 'one')}
+              className={`${inputClass} cursor-pointer bg-surface disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              <option value="">Does not repeat</option>
+              <option value="weekly">Weekly</option>
+              <option value="daily">Every day</option>
+            </select>
+          </Field>
+
+          {values.repeatFreq === 'weekly' ? (
+            <div className="mt-4">
+              <span className="mb-2 block text-[13px] font-medium text-ink-3">On these days</span>
+              <div className="flex gap-1.5">
+                {WEEKDAYS.map((day) => {
+                  const active = values.repeatDays.includes(day.value)
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      aria-label={day.full}
+                      aria-pressed={active}
+                      disabled={locked || (editing?.isOccurrence && scope === 'one')}
+                      onClick={() =>
+                        setValues((current) => ({
+                          ...current,
+                          repeatDays: current.repeatDays.includes(day.value)
+                            ? current.repeatDays.filter((value) => value !== day.value)
+                            : [...current.repeatDays, day.value],
+                        }))
+                      }
+                      className={cn(
+                        'h-9 w-9 cursor-pointer rounded-full text-[13px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                        active
+                          ? 'bg-brand-600 text-white'
+                          : 'bg-surface-2 text-ink-2 hover:bg-line',
+                      )}
+                    >
+                      {day.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {values.repeatFreq ? (
+            <Field
+              id="event-until"
+              label="Until"
+              hint="Leave blank to repeat indefinitely"
+              className="mt-4"
+            >
+              <input
+                id="event-until"
+                type="date"
+                value={values.repeatUntil}
+                onChange={set('repeatUntil')}
+                disabled={locked || (editing?.isOccurrence && scope === 'one')}
+                className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+              />
+            </Field>
+          ) : null}
+        </div>
+
+        {/* Only meaningful when one date of a repeating series is being edited. */}
+        {repeats && editing?.isOccurrence ? (
+          <div className="rounded-xl bg-surface-2 p-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { value: 'one', label: 'This event' },
+                { value: 'all', label: 'The whole series' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setScope(option.value)}
+                  className={cn(
+                    'cursor-pointer rounded-lg py-2 text-[13px] font-semibold transition-colors',
+                    scope === option.value
+                      ? 'bg-surface text-ink shadow-sm'
+                      : 'text-ink-3 hover:text-ink',
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="px-2 pt-2 pb-1 text-[12px] leading-relaxed text-ink-4">
+              {scope === 'one'
+                ? 'Changes apply to this date only, and it stops following the series.'
+                : 'Changes apply to every occurrence, including the repeat rule.'}
+            </p>
+          </div>
+        ) : null}
+
         <Field id="event-tag" label="Tag" hint='Optional, e.g. "High focus"'>
           <input
             id="event-tag"
             value={values.tag}
             onChange={set('tag')}
             placeholder="High focus"
-            className={inputClass}
+            disabled={locked}
+            className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
           />
         </Field>
 
         {error ? (
           <p
             role="alert"
-            className="rounded-xl bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600"
+            className="rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-[13px] font-medium text-red-600 dark:text-red-400"
           >
             {error}
           </p>

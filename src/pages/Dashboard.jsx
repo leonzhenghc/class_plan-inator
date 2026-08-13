@@ -115,10 +115,10 @@ export default function Dashboard() {
         {/* ------------------------------ Left column ----------------------------- */}
         <div className="min-w-0 flex-1">
           <div className="mb-8">
-            <h1 className="text-5xl font-extrabold tracking-tight text-gray-900">
+            <h1 className="text-5xl font-extrabold tracking-tight text-ink">
               Welcome back, {greetingName}
             </h1>
-            <p className="mt-3 text-lg text-gray-500">
+            <p className="mt-3 text-lg text-ink-3">
               You have{' '}
               <span className="font-bold text-brand-600">
                 {dueToday} assignment{dueToday === 1 ? '' : 's'}
@@ -131,7 +131,7 @@ export default function Dashboard() {
             <CardTitle
               action={
                 <Link
-                  to="/classes"
+                  to="/calendar"
                   className="inline-flex items-center gap-1 text-[15px] font-bold text-brand-600 hover:text-brand-700"
                 >
                   Full Calendar
@@ -148,7 +148,7 @@ export default function Dashboard() {
                   <span
                     className={cn(
                       'text-sm font-semibold',
-                      day.active ? 'text-brand-600' : 'text-gray-500',
+                      day.active ? 'text-brand-600' : 'text-ink-3',
                     )}
                   >
                     {day.label}
@@ -158,7 +158,7 @@ export default function Dashboard() {
                       'flex h-12 w-12 items-center justify-center rounded-full border text-[17px] font-semibold',
                       day.active
                         ? 'border-brand-600 bg-brand-600 text-white'
-                        : 'border-gray-200 bg-white text-gray-700',
+                        : 'border-line bg-surface text-ink-2',
                     )}
                   >
                     {day.date}
@@ -172,7 +172,7 @@ export default function Dashboard() {
           </Card>
 
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
+            <h2 className="text-3xl font-extrabold tracking-tight text-ink">
               Upcoming Assignments
             </h2>
             <Button
@@ -189,11 +189,11 @@ export default function Dashboard() {
           <div className="space-y-4">
             {upcoming.length === 0 ? (
               <Card className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                  <NotebookPen className="h-6 w-6 text-gray-400" strokeWidth={2} />
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
+                  <NotebookPen className="h-6 w-6 text-ink-4" strokeWidth={2} />
                 </span>
-                <p className="text-[15px] font-semibold text-gray-700">Nothing outstanding</p>
-                <p className="max-w-xs text-[15px] text-gray-500">
+                <p className="text-[15px] font-semibold text-ink-2">Nothing outstanding</p>
+                <p className="max-w-xs text-[15px] text-ink-3">
                   Add an assignment and it will show up here, sorted by what is due soonest.
                 </p>
                 <Button
@@ -211,15 +211,15 @@ export default function Dashboard() {
                 const tag = STATUS_TAGS[assignment.status] ?? STATUS_TAGS.todo
                 return (
                   <Card key={assignment.id} className="flex items-center gap-4 px-5 py-4">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-100 dark:bg-brand-500/20 text-brand-600">
                       <NotebookPen className="h-5 w-5" strokeWidth={2} />
                     </span>
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[17px] font-bold text-gray-900">
+                      <p className="truncate text-[17px] font-bold text-ink">
                         {assignment.title}
                       </p>
-                      <p className="mt-0.5 truncate text-[15px] text-gray-500">
+                      <p className="mt-0.5 truncate text-[15px] text-ink-3">
                         {course ? `${course.name} • ` : ''}
                         {formatDue(assignment.due_at)}
                       </p>
@@ -234,7 +234,7 @@ export default function Dashboard() {
                         onClick={() =>
                           setOpenMenu((current) => (current === assignment.id ? null : assignment.id))
                         }
-                        className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                        className="cursor-pointer rounded-lg p-1.5 text-ink-4 transition-colors hover:bg-surface-2 hover:text-ink-2"
                       >
                         <MoreHorizontal className="h-5 w-5" strokeWidth={2.25} />
                       </button>
@@ -248,7 +248,7 @@ export default function Dashboard() {
                             onClick={() => setOpenMenu(null)}
                             className="fixed inset-0 z-10 cursor-default"
                           />
-                          <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                          <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg">
                             <MenuItem
                               onClick={() => {
                                 setOpenMenu(null)
@@ -291,20 +291,20 @@ export default function Dashboard() {
         {/* ------------------------------ Right column ---------------------------- */}
         <div className="w-[380px] shrink-0 space-y-5">
           <Card className="flex items-center gap-4 px-5 py-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
-              <TrendingUp className="h-5 w-5 text-emerald-600" strokeWidth={2.5} />
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/20">
+              <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
             </span>
-            <div className="flex-1 border-r border-gray-200 pr-4">
-              <p className="text-[13px] text-gray-500">Focus Score</p>
-              <p className="text-[15px] font-bold text-gray-900">
+            <div className="flex-1 border-r border-line pr-4">
+              <p className="text-[13px] text-ink-3">Focus Score</p>
+              <p className="text-[15px] font-bold text-ink">
                 {focusChange === null
                   ? formatMinutes(thisWeekMinutes) + ' this week'
                   : `${focusChange >= 0 ? '+' : ''}${focusChange}% this week`}
               </p>
             </div>
             <div className="pl-1">
-              <p className="text-[13px] text-gray-500">Current Streak</p>
-              <p className="text-[15px] font-bold text-gray-900">
+              <p className="text-[13px] text-ink-3">Current Streak</p>
+              <p className="text-[15px] font-bold text-ink">
                 {streak} Day{streak === 1 ? '' : 's'} {streak > 0 ? '🔥' : ''}
               </p>
             </div>
@@ -313,7 +313,7 @@ export default function Dashboard() {
           <Card className="px-6 py-5">
             <CardTitle>Today&apos;s Focus</CardTitle>
             {focusItems.length === 0 ? (
-              <p className="mt-4 text-[15px] leading-relaxed text-gray-500">
+              <p className="mt-4 text-[15px] leading-relaxed text-ink-3">
                 Nothing set for today. Add a goal, or plan the day in the{' '}
                 <Link to="/planner" className="font-semibold text-brand-600 hover:text-brand-700">
                   Daily Planner
@@ -332,7 +332,7 @@ export default function Dashboard() {
                     <span
                       className={cn(
                         'text-[15px] leading-6',
-                        item.done ? 'text-gray-400 line-through' : 'text-gray-800',
+                        item.done ? 'text-ink-4 line-through' : 'text-ink',
                       )}
                     >
                       {item.title}
@@ -351,14 +351,14 @@ export default function Dashboard() {
                   placeholder="What needs doing today?"
                   aria-label="New goal"
                   autoFocus
-                  className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                  className="h-12 w-full rounded-xl border border-line px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                 />
               </form>
             ) : (
               <button
                 type="button"
                 onClick={() => setAddingFocus(true)}
-                className="mt-5 w-full cursor-pointer rounded-xl border border-dashed border-brand-300 py-3 text-[15px] font-bold text-brand-600 transition-colors hover:bg-brand-50"
+                className="mt-5 w-full cursor-pointer rounded-xl border border-dashed border-brand-300 dark:border-brand-500/40 py-3 text-[15px] font-bold text-brand-600 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/15"
               >
                 + Add specific goal
               </button>
@@ -367,7 +367,7 @@ export default function Dashboard() {
 
           <Card className="px-6 py-5">
             <CardTitle
-              action={<Timer className="h-[18px] w-[18px] text-gray-500" strokeWidth={2} />}
+              action={<Timer className="h-[18px] w-[18px] text-ink-3" strokeWidth={2} />}
             >
               Pomodoro
             </CardTitle>
@@ -376,7 +376,7 @@ export default function Dashboard() {
               <span className="mx-0.5">:</span>
               {widgetSeconds}
             </p>
-            <p className="mt-2 text-center text-[15px] text-gray-500">
+            <p className="mt-2 text-center text-[15px] text-ink-3">
               {config
                 ? running
                   ? 'Session running'
@@ -390,7 +390,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 aria-label="Reset timer"
-                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-surface-2 text-ink-3 transition-colors hover:bg-line"
               >
                 <RotateCcw className="h-[18px] w-[18px]" strokeWidth={2.25} />
               </button>
@@ -404,7 +404,7 @@ export default function Dashboard() {
                   <span
                     className={cn(
                       'text-[13px] font-bold',
-                      focusChange >= 0 ? 'text-emerald-600' : 'text-red-500',
+                      focusChange >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400',
                     )}
                   >
                     {focusChange >= 0 ? '↑' : '↓'} {Math.abs(focusChange)}%
@@ -424,7 +424,7 @@ export default function Dashboard() {
                         title={`${formatMinutes(bar.minutes)} focused`}
                         className={cn(
                           'w-full rounded-t-md transition-all',
-                          bar.isToday ? 'bg-brand-600' : 'bg-gray-200',
+                          bar.isToday ? 'bg-brand-600' : 'bg-line',
                         )}
                         style={{
                           // Floor at 4% so an empty day still reads as a bar, not a gap.
@@ -432,12 +432,12 @@ export default function Dashboard() {
                         }}
                       />
                     </div>
-                    <span className="text-xs font-semibold text-gray-400">{bar.day}</span>
+                    <span className="text-xs font-semibold text-ink-4">{bar.day}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-4 text-[15px] leading-relaxed text-gray-500">
+              <p className="mt-4 text-[15px] leading-relaxed text-ink-3">
                 Finish a focus block and your last seven days show up here.
               </p>
             )}
@@ -459,7 +459,7 @@ function MenuItem({ onClick, children }) {
     <button
       type="button"
       onClick={onClick}
-      className="block w-full cursor-pointer px-4 py-2.5 text-left text-[15px] font-medium text-gray-700 transition-colors hover:bg-gray-50"
+      className="block w-full cursor-pointer px-4 py-2.5 text-left text-[15px] font-medium text-ink-2 transition-colors hover:bg-surface-2"
     >
       {children}
     </button>

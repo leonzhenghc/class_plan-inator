@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting…</title>
+    <script>
+      // GitHub Pages serves this file for any path that isn't a real file, so
+      // deep links and reloads of /dashboard etc. land here. Remember where the
+      // visitor was, bounce to the app root, and let its router take over.
+      sessionStorage.setItem('clarity-redirect', location.pathname + location.search + location.hash)
+      location.replace('/class_plan-inator/')
+    </script>
+  </head>
+  <body></body>
+</html>

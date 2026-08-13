@@ -10,6 +10,21 @@
       rel="stylesheet"
     />
     <title>Clarity — Student Workspace</title>
+    <script>
+      // Paint before first render, otherwise dark-mode users get a white flash.
+      // Mirrors ThemeContext; kept inline because it must run before the bundle.
+      ;(function () {
+        try {
+          var stored = localStorage.getItem('clarity-theme') || 'system'
+          var dark =
+            stored === 'dark' ||
+            (stored === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+        } catch (error) {
+          /* private mode blocks storage; light is a fine fallback */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

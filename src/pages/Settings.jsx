@@ -10,6 +10,7 @@ import ChipGroup from '../components/ui/ChipGroup.jsx'
 import { HOBBIES, STUDY_STYLES, TRAITS } from '../data/personality.js'
 import { cn } from '../components/ui/cn.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 const NOTIFICATION_ROWS = [
   {
@@ -46,7 +47,7 @@ export default function Settings() {
     dueDates: preferences?.due_date_reminders ?? true,
     deepWork: preferences?.deep_work_mode ?? false,
   })
-  const [theme, setTheme] = useState(preferences?.theme ?? 'light')
+  const { theme, setTheme } = useTheme()
   const [personality, setPersonality] = useState({
     traits: savedProfile?.personality_traits ?? [],
     hobbies: savedProfile?.hobbies ?? [],
@@ -69,7 +70,7 @@ export default function Settings() {
       dueDates: preferences?.due_date_reminders ?? true,
       deepWork: preferences?.deep_work_mode ?? false,
     })
-    setTheme(preferences?.theme ?? 'light')
+    setTheme(preferences?.theme ?? 'system')
     setPersonality({
       traits: savedProfile?.personality_traits ?? [],
       hobbies: savedProfile?.hobbies ?? [],
@@ -116,8 +117,8 @@ export default function Settings() {
 
       <main className="flex-1 px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-5xl font-extrabold tracking-tight text-gray-900">Settings</h1>
-          <p className="mt-3 text-lg text-gray-500">
+          <h1 className="text-5xl font-extrabold tracking-tight text-ink">Settings</h1>
+          <p className="mt-3 text-lg text-ink-3">
             Customize your workspace and manage your connected academic tools.
           </p>
         </div>
@@ -143,10 +144,10 @@ export default function Settings() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
+                <h2 className="text-3xl font-extrabold tracking-tight text-ink">
                   {profile.fullName}
                 </h2>
-                <p className="mt-1 text-[15px] text-gray-500">{user.email}</p>
+                <p className="mt-1 text-[15px] text-ink-3">{user.email}</p>
 
                 <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {[
@@ -156,7 +157,7 @@ export default function Settings() {
                     <div key={field.id}>
                       <label
                         htmlFor={field.id}
-                        className="mb-2 block text-[13px] font-medium text-gray-500"
+                        className="mb-2 block text-[13px] font-medium text-ink-3"
                       >
                         {field.label}
                       </label>
@@ -166,7 +167,7 @@ export default function Settings() {
                         onChange={(event) =>
                           setProfile((current) => ({ ...current, [field.id]: event.target.value }))
                         }
-                        className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                        className="h-12 w-full rounded-xl border border-line px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                       />
                     </div>
                   ))}
@@ -186,7 +187,7 @@ export default function Settings() {
               ].map((field) => (
                 <div key={field.id}>
                   <div className="mb-2 flex items-center justify-between">
-                    <label htmlFor={field.id} className="text-[15px] font-medium text-gray-700">
+                    <label htmlFor={field.id} className="text-[15px] font-medium text-ink-2">
                       {field.label}
                     </label>
                     <span className="text-[13px] font-semibold text-brand-600">min</span>
@@ -199,7 +200,7 @@ export default function Settings() {
                     onChange={(event) =>
                       setPomodoro((current) => ({ ...current, [field.id]: event.target.value }))
                     }
-                    className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[15px] text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                    className="h-12 w-full rounded-xl border border-line px-4 text-[15px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                   />
                 </div>
               ))}
@@ -222,8 +223,8 @@ export default function Settings() {
               {NOTIFICATION_ROWS.map((row) => (
                 <div key={row.id} className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-[15px] font-bold text-gray-900">{row.label}</p>
-                    <p className="mt-0.5 text-[13px] text-gray-500">{row.description}</p>
+                    <p className="text-[15px] font-bold text-ink">{row.label}</p>
+                    <p className="mt-0.5 text-[13px] text-ink-3">{row.description}</p>
                   </div>
                   <ToggleSwitch
                     checked={notifications[row.id]}
@@ -242,7 +243,7 @@ export default function Settings() {
         {/* ------------------------------- Personality ------------------------------- */}
         <Card className="mt-6 px-7 py-6">
           <CardTitle icon={Sparkles}>About you</CardTitle>
-          <p className="mt-1 text-[15px] text-gray-500">
+          <p className="mt-1 text-[15px] text-ink-3">
             Context for your study assistant. Change it whenever you like.
           </p>
 
@@ -276,7 +277,7 @@ export default function Settings() {
             <div>
               <label
                 htmlFor="aboutMe"
-                className="mb-2 block text-[15px] font-semibold text-gray-800"
+                className="mb-2 block text-[15px] font-semibold text-ink"
               >
                 Anything else worth knowing?
               </label>
@@ -287,27 +288,27 @@ export default function Settings() {
                 onChange={(event) =>
                   setPersonality((current) => ({ ...current, aboutMe: event.target.value }))
                 }
-                className="w-full resize-y rounded-xl border border-gray-200 px-4 py-3 text-[15px] leading-relaxed text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                className="w-full resize-y rounded-xl border border-line px-4 py-3 text-[15px] leading-relaxed text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
               />
             </div>
           </div>
         </Card>
 
         {/* -------------------------------- Appearance ------------------------------- */}
-        <div className="mt-6 flex items-center gap-5 rounded-2xl border border-gray-200 bg-gray-50 px-7 py-6">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+        <div className="mt-6 flex items-center gap-5 rounded-2xl border border-line bg-surface-2 px-7 py-6">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-surface shadow-sm">
             <Moon className="h-6 w-6 text-brand-600" strokeWidth={2} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-2xl font-extrabold tracking-tight text-gray-900">Appearance</p>
-            <p className="mt-1 text-[15px] text-gray-500">
-              Switch between Light and Dark workspace themes.
+            <p className="text-2xl font-extrabold tracking-tight text-ink">Appearance</p>
+            <p className="mt-1 text-[15px] text-ink-3">
+              System follows your device setting and changes with it.
             </p>
           </div>
           <SegmentedControl
             size="sm"
-            className="bg-white ring-1 ring-gray-200"
-            activeClassName="bg-sky-50 text-gray-900"
+            className="bg-surface ring-1 ring-line"
+            activeClassName="bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300"
             options={[
               { value: 'light', label: 'Light' },
               { value: 'dark', label: 'Dark' },
@@ -318,7 +319,7 @@ export default function Settings() {
           />
         </div>
 
-        <div className="mt-8 border-t border-gray-200 pt-6">
+        <div className="mt-8 border-t border-line pt-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Button variant="outline" size="lg" icon={LogOut} onClick={signOut}>
               Sign out
@@ -330,7 +331,7 @@ export default function Settings() {
                   role="status"
                   className={cn(
                     'text-[15px] font-semibold',
-                    status.tone === 'error' ? 'text-red-600' : 'text-emerald-600',
+                    status.tone === 'error' ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400',
                   )}
                 >
                   {status.message}

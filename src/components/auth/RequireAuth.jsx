@@ -12,7 +12,7 @@ export default function RequireAuth({ children }) {
   const location = useLocation()
 
   const spinner = (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-surface-2">
       <Loader2 className="h-7 w-7 animate-spin text-brand-600" />
     </div>
   )
