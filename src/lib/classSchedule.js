@@ -41,10 +41,15 @@ export function buildClassSchedule({
   endTime,
   meetingDays,
 }) {
-  const provided = [startsOn, endsOn, startTime, endTime].some(
-    (value) => value !== null && value !== undefined && value !== '',
-  )
   meetingDays = meetingDays ?? []
+
+  const provided = [
+    startsOn,
+    endsOn,
+    startTime,
+    endTime,
+    meetingDays.length > 0,
+  ].some((value) => value !== null && value !== undefined && value !== '' && value !== false)
 
   // Nothing entered — no schedule. Same shape as a class saved before this
   // feature existed, so editing an old class works without touching anything.

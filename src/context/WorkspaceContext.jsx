@@ -84,11 +84,14 @@ export function WorkspaceProvider({ children }) {
         sessionResult.error ??
         null,
     )
-    setClasses(classResult.data ?? [])
-    setAssignments(assignmentResult.data ?? [])
-    setTasks(taskResult.data ?? [])
-    setEvents(eventResult.data ?? [])
-    setSessions(sessionResult.data ?? [])
+    // A table that failed to fetch keeps whatever was already shown; only
+    // successful queries replace the local collections. The error banner above
+    // still tells the user a reload failed, and the next one will retry.
+    setClasses((current) => (classResult.error ? current : classResult.data ?? []))
+    setAssignments((current) => (assignmentResult.error ? current : assignmentResult.data ?? []))
+    setTasks((current) => (taskResult.error ? current : taskResult.data ?? []))
+    setEvents((current) => (eventResult.error ? current : eventResult.data ?? []))
+    setSessions((current) => (sessionResult.error ? current : sessionResult.data ?? []))
     setLoading(false)
   }, [user])
 
@@ -114,18 +117,10 @@ export function WorkspaceProvider({ children }) {
       const fixedEvents = eventsRef.current.filter(
         (item) => item.class_id === classId && item.fixed,
       )
-      if (fixedEvents.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('events')
-          .delete()
-          .eq('id', fixedEvents.map((item) => item.id))
-        if (deleteError) return deleteError
-        setEvents((current) =>
-          current.filter((item) => !fixedEvents.some((fixed) => fixed.id === item.id)),
-        )
-      }
 
       if (schedule) {
+        // Insert the replacement first: if it fails the old blocks are still
+        // intact, so an edit gone wrong never destroys the existing schedule.
         const { data, error: insertError } = await supabase
           .from('events')
           .insert({ ...schedule, class_id: classId, user_id: user.id })
@@ -133,6 +128,20 @@ export function WorkspaceProvider({ children }) {
           .single()
         if (insertError) return insertError
         setEvents((current) => [...current, data])
+      }
+
+      if (fixedEvents.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('events')
+          .delete()
+          .in(
+            'id',
+            fixedEvents.map((item) => item.id),
+          )
+        if (deleteError) return deleteError
+        setEvents((current) =>
+          current.filter((item) => !fixedEvents.some((fixed) => fixed.id === item.id)),
+        )
       }
       return null
     },
@@ -348,34 +357,6 @@ export function WorkspaceProvider({ children }) {
     return updateEvent(seriesId, { excluded_dates: excluded })
   }, [updateEvent])
 
-  /**
-   * Detaches one date from a series: the series skips it, and a normal row
-   * takes its place. That row is an ordinary event from then on, so editing or
-   * dragging it later never touches the rest of the series.
-   */
-  const overrideOccurrence = useCallback(
-    async (seriesId, dateKey, values) => {
-      const series = eventsRef.current.find((item) => item.id === seriesId)
-      if (!series) return { error: new Error('Series not found') }
-
-      const { error: excludeError } = await excludeOccurrence(seriesId, dateKey)
-      if (excludeError) return { error: excludeError }
-
-      const { id, created_at, updated_at, ...base } = series
-      return createEvent({
-        ...base,
-        repeat_freq: null,
-        repeat_days: [],
-        repeat_until: null,
-        excluded_dates: [],
-        recurrence_id: seriesId,
-        event_date: dateKey,
-        ...values,
-      })
-    },
-    [excludeOccurrence, createEvent],
-  )
-
   const deleteEvent = useCallback(async (id) => {
     try {
       const { error: deleteError } = await supabase.from('events').delete().eq('id', id)
@@ -385,6 +366,44 @@ export function WorkspaceProvider({ children }) {
       return { error: asError(cause) }
     }
   }, [])
+
+  /**
+   * Detaches one date from a series: a normal row takes its place, then the
+   * series skips the date. Insert first so a failure leaves the series intact;
+   * if the exclusion then fails, the orphan override is rolled back instead of
+   * silently losing the occurrence.
+   */
+  const overrideOccurrence = useCallback(
+    async (seriesId, dateKey, values) => {
+      const series = eventsRef.current.find((item) => item.id === seriesId)
+      if (!series) return { error: new Error('Series not found') }
+
+      const { id, created_at, updated_at, ...base } = series
+      const created = await createEvent({
+        ...base,
+        repeat_freq: null,
+        repeat_days: [],
+        repeat_until: null,
+        excluded_dates: [],
+        recurrence_id: seriesId,
+        event_date: dateKey,
+        ...values,
+      })
+      if (created.error) return created
+
+      const { error: excludeError } = await excludeOccurrence(seriesId, dateKey)
+      if (excludeError) {
+        const { error: rollbackError } = await deleteEvent(created.data.id)
+        return {
+          error:
+            rollbackError ??
+            new Error(`${excludeError.message} The moved block was removed again.`),
+        }
+      }
+      return created
+    },
+    [excludeOccurrence, createEvent, deleteEvent],
+  )
 
   /* --------------------------- pomodoro sessions --------------------------- */
 
