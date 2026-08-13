@@ -78,6 +78,18 @@ describe('buildClassSchedule', () => {
     expect(schedule({ startTime: null }).error.message).toMatch(/start and end dates/)
   })
 
+  it('counts meeting days alone as a schedule request', () => {
+    // Picking days but leaving the dates/times blank used to slip through as a
+    // silent "no schedule"; it must surface the same fill-in error instead.
+    const { schedule: built, error } = buildClassSchedule({
+      classId: 'c1',
+      name: 'x',
+      meetingDays: [1, 3],
+    })
+    expect(built).toBeUndefined()
+    expect(error.message).toMatch(/start and end dates/)
+  })
+
   it('rejects when no meeting day falls inside the range', () => {
     // 2026-08-24 (Mon) to 2026-08-28 (Fri) contains no Sunday (0).
     const { error } = schedule({ startsOn: '2026-08-24', endsOn: '2026-08-28', meetingDays: [0] })

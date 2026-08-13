@@ -43,6 +43,7 @@ export default function Pomodoro() {
     toggle,
     reset,
     skip,
+    logError,
   } = useStudySession()
 
   const sessionTaskOptions = useSessionTaskOptions()
@@ -221,6 +222,14 @@ export default function Pomodoro() {
               : `Ready: ${primaryLabel}`
             : ''}
         </p>
+        {logError ? (
+          <p
+            role="alert"
+            className="mt-2 text-[13px] font-medium text-amber-300 drop-shadow"
+          >
+            {logError}
+          </p>
+        ) : null}
       </div>
 
       <SessionDrawer

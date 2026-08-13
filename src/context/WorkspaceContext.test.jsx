@@ -9,6 +9,8 @@ const { queryState } = vi.hoisted(() => ({
     generations: [],
     /** Every insert/update/delete gets its own deferred, in call order. */
     mutations: [],
+    /** Filters passed to `eq`/`in` on any chain, so `.in` arrays stay observable. */
+    filters: [],
     createDeferred() {
       let resolve = () => {}
       let reject = () => {}
@@ -45,7 +47,14 @@ vi.mock('../lib/supabase.js', () => ({
         select: () => chain,
         order: () => chain,
         limit: () => chain,
-        eq: () => chain,
+        eq: (column, value) => {
+          queryState.filters.push({ column, value })
+          return chain
+        },
+        in: (column, value) => {
+          queryState.filters.push({ column, value })
+          return chain
+        },
         single: () => chain,
         update: () => mutationChain('update'),
         delete: () => mutationChain('delete'),
@@ -61,7 +70,14 @@ vi.mock('../lib/supabase.js', () => ({
           select: () => inner,
           order: () => inner,
           limit: () => inner,
-          eq: () => inner,
+          eq: (column, value) => {
+            queryState.filters.push({ column, value })
+            return inner
+          },
+          in: (column, value) => {
+            queryState.filters.push({ column, value })
+            return inner
+          },
           single: () => inner,
           update: () => mutationChain('update'),
           delete: () => mutationChain('delete'),
@@ -188,6 +204,7 @@ beforeEach(() => {
   queryState.user = null
   queryState.generations = []
   queryState.mutations = []
+  queryState.filters = []
   queryState.generations.push(queryState.makeDeferreds())
 })
 
@@ -364,17 +381,94 @@ describe('class schedules', () => {
       data: { id: 'c1', name: 'New name' },
       error: null,
     })
-    await waitFor(() => expect(mutation('events', 'delete')).toBeDefined())
-    mutation('events', 'delete').deferred.resolve({ data: null, error: null })
+    // Replacement is inserted before the old blocks are removed, so a failed
+    // insert never leaves the class with no schedule at all.
     await waitFor(() => expect(mutation('events', 'insert')).toBeDefined())
     mutation('events', 'insert').deferred.resolve({
       data: { id: 'e2', class_id: 'c1', fixed: true },
       error: null,
     })
+    await waitFor(() => expect(mutation('events', 'delete')).toBeDefined())
+    mutation('events', 'delete').deferred.resolve({ data: null, error: null })
 
     await waitFor(() => expect(screen.getByTestId('create-result')).toHaveTextContent('ok'))
     // e1 gone, e2 present — a length of one proves both the delete and insert ran.
     expect(screen.getByTestId('events')).toHaveTextContent('1')
+  })
+
+  it('deletes the old fixed blocks via `.in`, with every block id as an array', async () => {
+    queryState.user = { id: 'u1' }
+    render(
+      <Harness>
+        <Probe />
+      </Harness>,
+    )
+    deferred('classes').resolve({ data: [{ id: 'c1' }], error: null })
+    for (const table of ['assignments', 'tasks', 'pomodoro_sessions']) {
+      deferred(table).resolve({ data: [], error: null })
+    }
+    deferred('events').resolve({
+      data: [
+        { id: 'e1', class_id: 'c1', fixed: true },
+        { id: 'e2', class_id: 'c1', fixed: true },
+      ],
+      error: null,
+    })
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'))
+
+    fireEvent.click(screen.getByText('update class'))
+    mutation('classes', 'update').deferred.resolve({
+      data: { id: 'c1', name: 'New name' },
+      error: null,
+    })
+    await waitFor(() => expect(mutation('events', 'insert')).toBeDefined())
+    mutation('events', 'insert').deferred.resolve({
+      data: { id: 'e3', class_id: 'c1', fixed: true },
+      error: null,
+    })
+    await waitFor(() => expect(mutation('events', 'delete')).toBeDefined())
+    mutation('events', 'delete').deferred.resolve({ data: null, error: null })
+
+    await waitFor(() => expect(screen.getByTestId('create-result')).toHaveTextContent('ok'))
+    // `.in` must carry the whole id list — a `.eq` with an array is what
+    // originally broke multi-day schedules by stringifying it into garbage.
+    expect(queryState.filters).toContainEqual({ column: 'id', value: ['e1', 'e2'] })
+    expect(screen.getByTestId('events')).toHaveTextContent('1')
+  })
+
+  it('keeps the old schedule when the replacement insert fails', async () => {
+    queryState.user = { id: 'u1' }
+    render(
+      <Harness>
+        <Probe />
+      </Harness>,
+    )
+    deferred('classes').resolve({ data: [{ id: 'c1' }], error: null })
+    for (const table of ['assignments', 'tasks', 'pomodoro_sessions']) {
+      deferred(table).resolve({ data: [], error: null })
+    }
+    deferred('events').resolve({
+      data: [{ id: 'e1', class_id: 'c1', fixed: true }],
+      error: null,
+    })
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'))
+
+    fireEvent.click(screen.getByText('update class'))
+    mutation('classes', 'update').deferred.resolve({
+      data: { id: 'c1', name: 'New name' },
+      error: null,
+    })
+    await waitFor(() => expect(mutation('events', 'insert')).toBeDefined())
+    mutation('events', 'insert').deferred.reject(new Error('network down'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('create-result')).toHaveTextContent('error: network down'),
+    )
+    // The old blocks survive untouched; no delete was ever issued.
+    expect(screen.getByTestId('events')).toHaveTextContent('1')
+    expect(
+      queryState.mutations.some((item) => item.table === 'events' && item.verb === 'delete'),
+    ).toBe(false)
   })
 
   it('removes fixed blocks when the class is deleted', async () => {
