@@ -100,12 +100,17 @@ The auth routes are public — the emailed links create a session before landing
 reachable either way. Everything else requires a session, and new accounts pass through
 `/onboarding` once.
 
+The top-bar search deep-links into the data pages: a class or assignment result jumps to
+`/classes?focus=<id>` (the matching card is ringed and scrolled to), an event result to
+`/calendar?view=day&date=<occurrence>&focus=<id>` and a task result to
+`/calendar?view=day&date=<task date>&focusTask=<id>`.
+
 ## Status
 
 Every page reads and writes real data: profiles, preferences, classes, assignments, planner events,
 tasks and pomodoro history. There is no mock data left in the app.
 
-Known gaps: the search box, notification bell and help icon are not wired up; the appearance
+Known gaps: the notification bell and help icon are not wired up; the appearance
 toggle stores a theme nothing reads yet; the notification switches persist but nothing sends
 reminders; and events cannot repeat, so a class that meets weekly needs re-creating each time.
 

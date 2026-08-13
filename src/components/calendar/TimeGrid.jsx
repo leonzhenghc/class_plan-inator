@@ -41,7 +41,15 @@ function label(hour) {
  * `onCommit` — the same context mutation the dialogs use, so an agent editing
  * the schedule later takes the identical path.
  */
-export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, className }) {
+export default function TimeGrid({
+  days,
+  events,
+  focusedId = null,
+  onCommit,
+  onCreate,
+  onOpen,
+  className,
+}) {
   const bodyRef = useRef(null)
   /** Live drag state; null when idle. Kept in state so the block re-renders. */
   const [drag, setDrag] = useState(null)
@@ -210,6 +218,7 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
                       key={item.id}
                       role="button"
                       tabIndex={0}
+                      data-event-id={item.id}
                       onPointerDown={(event) => beginDrag('move')(event, item)}
                       onClick={() => {
                         if (movedRef.current) {
@@ -226,6 +235,8 @@ export default function TimeGrid({ days, events, onCommit, onCreate, onOpen, cla
                         item.fixed ? 'cursor-default' : 'cursor-grab',
                         KIND_STYLES[item.kind] ?? KIND_STYLES.study,
                         dragging && 'z-30 cursor-grabbing opacity-90 shadow-lg',
+                        focusedId === item.id &&
+                          'ring-2 ring-brand-500 shadow-lg shadow-brand-500/20',
                       )}
                       style={{ top: `${top}px`, height: `${height}px` }}
                     >

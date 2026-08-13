@@ -32,6 +32,7 @@ export default function MonthGrid({
   assignments,
   classesById,
   selected,
+  focusedId = null,
   onSelect,
   onCreate,
   onOpenEvent,
@@ -127,7 +128,13 @@ export default function MonthGrid({
                       {items.slice(0, MAX_CHIPS).map((item) => (
                         <span
                           key={`${item.source}-${item.id}`}
-                          className="flex items-center gap-1 truncate text-[11px] font-medium"
+                          data-event-id={item.source === 'event' ? item.id : undefined}
+                          className={cn(
+                            'flex items-center gap-1 truncate text-[11px] font-medium',
+                            focusedId === item.id &&
+                              item.source === 'event' &&
+                              'rounded bg-brand-50 px-1 ring-1 ring-brand-500 dark:bg-brand-500/10',
+                          )}
                         >
                           {item.source === 'event' ? (
                             <span
