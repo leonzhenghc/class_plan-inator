@@ -5,6 +5,7 @@ import Avatar from '../ui/Avatar.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useWorkspace } from '../../context/WorkspaceContext.jsx'
 import { formatDueShort } from '../../lib/dates.js'
+import { buildTarget } from '../../lib/searchTarget.js'
 
 const SEARCH_LIMIT = 4
 
@@ -31,10 +32,20 @@ export default function TopBar({ placeholder = 'Search tasks, classes, or notes.
   const total = results.classes.length + results.assignments.length + results.tasks.length + results.events.length
   const open = focused && query.trim().length > 0
 
+  // Results deep-link to the exact item on the destination page; every page
+  // reads the focus parameter to highlight what was searched for.
   const go = (to) => {
     setQuery('')
     setFocused(false)
     navigate(to)
+  }
+
+  // Result groups are keyed by plural names; buildTarget speaks singular kinds.
+  const KIND_BY_GROUP = {
+    classes: 'class',
+    assignments: 'assignment',
+    tasks: 'task',
+    events: 'event',
   }
 
   const goFirst = (event) => {
@@ -44,12 +55,10 @@ export default function TopBar({ placeholder = 'Search tasks, classes, or notes.
       results.assignments[0] ??
       results.tasks[0] ??
       results.events[0]
-    if (first) {
-      if (results.classes.includes(first)) go(`/classes`)
-      else if (results.assignments.includes(first)) go(`/classes`)
-      else if (results.events.includes(first)) go(`/calendar`)
-      else go(`/planner`)
-    }
+    if (!first) return
+    const [group] = Object.entries(results).find(([, items]) => items[0] === first) ?? []
+    const kind = KIND_BY_GROUP[group]
+    if (kind) go(buildTarget(kind, first).to)
   }
 
   return (
@@ -83,37 +92,37 @@ export default function TopBar({ placeholder = 'Search tasks, classes, or notes.
                   <SearchGroup
                     label="Classes"
                     icon={GraduationCap}
-                    href="/classes"
                     items={results.classes}
                     title={(item) => item.name}
                     meta={(item) => item.professor || item.category}
+                    to={(item) => buildTarget('class', item).to}
                     onPick={go}
                   />
                   <SearchGroup
                     label="Assignments"
                     icon={NotebookPen}
-                    href="/classes"
                     items={results.assignments}
                     title={(item) => item.title}
                     meta={(item) => formatDueShort(item.due_at)}
+                    to={(item) => buildTarget('assignment', item).to}
                     onPick={go}
                   />
                   <SearchGroup
                     label="Events"
                     icon={CalendarDays}
-                    href="/calendar"
                     items={results.events}
                     title={(item) => item.title}
                     meta={(item) => item.subtitle}
+                    to={(item) => buildTarget('event', item).to}
                     onPick={go}
                   />
                   <SearchGroup
                     label="Tasks"
                     icon={ClipboardList}
-                    href="/planner"
                     items={results.tasks}
                     title={(item) => item.title}
                     meta={(item) => item.category}
+                    to={(item) => buildTarget('task', item).to}
                     onPick={go}
                   />
                 </ul>
@@ -151,7 +160,7 @@ export default function TopBar({ placeholder = 'Search tasks, classes, or notes.
   )
 }
 
-function SearchGroup({ label, icon: Icon, href, items, title, meta, onPick }) {
+function SearchGroup({ label, icon: Icon, items, title, meta, to, onPick }) {
   if (items.length === 0) return null
   return (
     <li>
@@ -164,7 +173,7 @@ function SearchGroup({ label, icon: Icon, href, items, title, meta, onPick }) {
           type="button"
           // mousedown fires before the input blurs, so the dropdown is still open.
           onMouseDown={(event) => event.preventDefault()}
-          onClick={() => onPick(href)}
+          onClick={() => onPick(to(item))}
           className="flex w-full cursor-pointer items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-surface-2"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-ink-3">

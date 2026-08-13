@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import TopBar from '../components/layout/TopBar.jsx'
@@ -45,6 +45,9 @@ export default function CalendarPage() {
     ? params.get('view')
     : 'month'
   const anchor = parseDate(params.get('date')) ?? new Date()
+  // Search deep links land here with ?focus=<event row id> / ?focusTask=<task id>.
+  const focus = params.get('focus')
+  const focusedTaskId = params.get('focusTask')
 
   const [selected, setSelected] = useState(null)
   const [dialog, setDialog] = useState({ open: false, editing: null, date: null, start: null })
@@ -94,6 +97,22 @@ export default function CalendarPage() {
     return expandEvents(events, days[0], days[days.length - 1])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, view, toDateKey(anchor), days])
+
+  /**
+   * The searched-for row, possibly as one of its occurrences. The grids ring
+   * it, and the page scrolls to its first render on screen.
+   */
+  const focusedItem = useMemo(
+    () => visible.find((item) => item.id === focus || item.seriesId === focus) ?? null,
+    [visible, focus],
+  )
+
+  useEffect(() => {
+    if (!focusedItem) return
+    document
+      .querySelector(`[data-event-id="${focusedItem.id}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusedItem])
 
   const heading =
     view === 'month'
@@ -193,6 +212,7 @@ export default function CalendarPage() {
             assignments={assignments}
             classesById={classesById}
             selected={selected}
+            focusedId={focusedItem?.id ?? null}
             onSelect={setSelected}
             onCreate={openCreate}
             onOpenEvent={(item) =>
@@ -206,6 +226,7 @@ export default function CalendarPage() {
               <TimeGrid
                 days={days}
                 events={visible}
+                focusedId={focusedItem?.id ?? null}
                 onCommit={commitTimes}
                 onCreate={openCreate}
                 onOpen={(item) =>
@@ -218,7 +239,13 @@ export default function CalendarPage() {
                 }
               />
             </div>
-            {view === 'day' ? <TaskPanel date={anchor} className="w-[260px] shrink-0" /> : null}
+            {view === 'day' ? (
+              <TaskPanel
+                date={anchor}
+                focusedTaskId={focusedTaskId}
+                className="w-[260px] shrink-0"
+              />
+            ) : null}
           </div>
         )}
 

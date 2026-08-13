@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
   GraduationCap,
@@ -9,7 +9,7 @@ import {
   SlidersHorizontal,
   Timer,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import TopBar from '../components/layout/TopBar.jsx'
 import Card from '../components/ui/Card.jsx'
 import Button from '../components/ui/Button.jsx'
@@ -34,17 +34,29 @@ const ALL_SEMESTERS = '__all__'
 
 export default function ClassPlanner() {
   const { loading, classes, statsByClass } = useWorkspace()
+  const [params] = useSearchParams()
+  const focus = params.get('focus')
   const [view, setView] = useState('grid')
   const [semester, setSemester] = useState(ALL_SEMESTERS)
   const [sortBy, setSortBy] = useState('due')
   const [classDialog, setClassDialog] = useState({ open: false, editing: null })
   const [assignmentDialog, setAssignmentDialog] = useState({ open: false, classId: null })
 
+  // Search deep links land here with ?focus=<classId>. The semester filter is
+  // dropped so the card is guaranteed to render, then the page scrolls to it.
+  const effectiveSemester = focus ? ALL_SEMESTERS : semester
+  useEffect(() => {
+    if (!focus) return
+    document
+      .getElementById(`class-card-${focus}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focus])
+
   const visible = useMemo(() => {
     const filtered =
-      semester === ALL_SEMESTERS
+      effectiveSemester === ALL_SEMESTERS
         ? classes
-        : classes.filter((item) => item.semester === semester)
+        : classes.filter((item) => item.semester === effectiveSemester)
 
     // Classes with nothing outstanding sink to the bottom rather than jumping to the top.
     return [...filtered].sort((a, b) => {
@@ -56,7 +68,7 @@ export default function ClassPlanner() {
       if (!nextB) return -1
       return new Date(nextA) - new Date(nextB)
     })
-  }, [classes, semester, sortBy, statsByClass])
+  }, [classes, effectiveSemester, sortBy, statsByClass])
 
   return (
     <>
@@ -150,7 +162,15 @@ export default function ClassPlanner() {
               const stats = statsByClass[course.id] ?? { total: 0, done: 0, next: null }
               const summary = describeSchedule(course)
               return (
-                <Card key={course.id} className="group flex flex-col px-6 py-6">
+                <Card
+                  key={course.id}
+                  id={`class-card-${course.id}`}
+                  className={cn(
+                    'group flex flex-col px-6 py-6',
+                    focus === course.id &&
+                      'ring-2 ring-brand-500 shadow-lg shadow-brand-500/20',
+                  )}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <StatusTag tone={CATEGORY_TONES[course.category] ?? 'todo'}>
                       {course.category}

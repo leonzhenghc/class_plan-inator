@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import Checkbox from '../ui/Checkbox.jsx'
 import { cn } from '../ui/cn.js'
@@ -6,13 +6,21 @@ import { useWorkspace } from '../../context/WorkspaceContext.jsx'
 import { toDateKey } from '../../lib/dates.js'
 
 /** Day's checklist. Deliberately flat — it sits beside a dense time grid. */
-export default function TaskPanel({ date, className }) {
+export default function TaskPanel({ date, focusedTaskId = null, className }) {
   const { tasks, createTask, updateTask, deleteTask } = useWorkspace()
   const [draft, setDraft] = useState('')
 
   const dateKey = toDateKey(date)
   const dayTasks = tasks.filter((task) => task.task_date === dateKey)
   const remaining = dayTasks.filter((task) => !task.done).length
+
+  // A search deep link landing here gets scrolled into view.
+  useEffect(() => {
+    if (!focusedTaskId) return
+    document
+      .querySelector(`[data-task-id="${focusedTaskId}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusedTaskId])
 
   const add = async (event) => {
     event.preventDefault()
@@ -36,7 +44,14 @@ export default function TaskPanel({ date, className }) {
           </li>
         ) : (
           dayTasks.map((task) => (
-            <li key={task.id} className="group flex items-start gap-2.5 rounded-md py-1">
+            <li
+              key={task.id}
+              data-task-id={task.id}
+              className={cn(
+                'group flex items-start gap-2.5 rounded-md py-1',
+                focusedTaskId === task.id && 'bg-brand-50 px-1 ring-1 ring-brand-500 dark:bg-brand-500/10',
+              )}
+            >
               <Checkbox
                 checked={task.done}
                 onChange={() => updateTask(task.id, { done: !task.done })}
